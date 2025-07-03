@@ -48,6 +48,11 @@ class YarnProject {
 
   bool strictCharacterNames = true;
 
+  /// When set to true, `declare` commands that are declaring variables that already exists
+  /// (usually by programmatically populating [variables]) will be skipped, including their
+  /// assignments. This is usefuly if the yarn [variables] are used in persistence.
+  bool skipGlobalVariableRedeclarations = false;
+
   /// Tokens that represent valid true/false values when converting an argument
   /// into a boolean. These sets can be modified by the user.
   static Set<String> trueValues = {'true', 'yes', 'on', '+', 'T', '1'};

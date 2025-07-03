@@ -629,13 +629,18 @@ class _Parser {
     if (isLocal && localVariables!.hasVariable(variableName)) {
       nameError('redeclaration of local variable $variableName');
     }
+    bool skipAssignment = false;
     if (project.variables.hasVariable(variableName)) {
-      nameError(
-        isLocal
-            ? 'variable $variableName shadows a global variable with the '
-                'same name'
-            : 'variable $variableName has already been declared',
-      );
+      if (project.skipGlobalVariableRedeclarations && !isLocal) {
+        skipAssignment = true;
+      } else {
+        nameError(
+          isLocal
+              ? 'variable $variableName shadows a global variable with the '
+                  'same name'
+              : 'variable $variableName has already been declared',
+        );
+      }
     }
     position += 1;
     late final Expression expression;
@@ -681,7 +686,9 @@ class _Parser {
       localVariables!.setVariable(variableName, initialValue);
       return LocalCommand(variableName, expression, localVariables!);
     } else {
-      project.variables.setVariable(variableName, expression.value);
+      if (!skipAssignment) {
+        project.variables.setVariable(variableName, expression.value);
+      }
       return const DeclareCommand();
     }
   }
