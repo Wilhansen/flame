@@ -73,7 +73,10 @@ class _Parser {
         content: block,
         variables: localVariables,
       );
-      project.variables.setVariable('@$name', 0);
+      final nodeVariable = '@$name';
+      if (project.resetNodeVisitOnLoad ||
+          !project.variables.hasVariable(nodeVariable))
+        project.variables.setVariable(nodeVariable, 0);
       localVariables = null;
     }
   }
