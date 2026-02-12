@@ -92,12 +92,21 @@ abstract class Particle {
   /// Allows to only specify desired lifespan once, at the very top of the
   /// [Particle] tree which then will be propagated down using this method.
   ///
+  /// Calling this functions resets the progress of the particle and sets
+  /// [shouldRemove] back to false. This is useful for cases where the
+  /// particle is to be reused instead of recreated.
+  ///
   /// See `SingleChildParticle` or [ComposedParticle] for details.
   void setLifespan(double lifespan) {
     // TODO(wolfenrain): Maybe make it into a setter/getter?
     _lifespan = lifespan;
-    _timer?.stop();
-    _timer = Timer(lifespan, onTick: () => _shouldBeRemoved = true)..start();
+    _shouldBeRemoved = false;
+    if (_timer == null) {
+      _timer = Timer(lifespan, onTick: () => _shouldBeRemoved = true)..start();
+    } else {
+      _timer.limit = lifespan;
+      _timer.start();
+    }
   }
 
   /// Wraps this particle with a [TranslatedParticle].
