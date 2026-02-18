@@ -101,11 +101,11 @@ abstract class Particle {
     // TODO(wolfenrain): Maybe make it into a setter/getter?
     _lifespan = lifespan;
     _shouldBeRemoved = false;
-    if (_timer == null) {
+    if (_timer != null) {
+      _timer?.limit = lifespan;
+      _timer?.start();
+    } else  {
       _timer = Timer(lifespan, onTick: () => _shouldBeRemoved = true)..start();
-    } else {
-      _timer.limit = lifespan;
-      _timer.start();
     }
   }
 
