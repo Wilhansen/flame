@@ -1,3 +1,15 @@
+## 1.4.0
+
+ - **FEAT**(flame_behaviors): Add ScreenCollisionBehavior ([#3910](https://github.com/flame-engine/flame/issues/3910)). ([48894135](https://github.com/flame-engine/flame/commit/48894135587218690f7faa7382ba24d45658e235))
+
+## 1.3.5
+
+ - Update a dependency to the latest release.
+
+## 1.3.4
+
+ - **FIX**: Bump Flutter min version to 3.41.0 ([#3807](https://github.com/flame-engine/flame/issues/3807)). ([0d505304](https://github.com/flame-engine/flame/commit/0d50530485e5be9ce1c9138a5b437607c7c5c628))
+
 ## 1.3.3
 
  - Update a dependency to the latest release.

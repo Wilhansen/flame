@@ -10,10 +10,10 @@ will be handled correctly by Flame, and you can even keep track of the events by
 For those components that you want to respond to drags, add the `DragCallbacks` mixin.
 
 - This mixin adds four overridable methods to your component: `onDragStart`, `onDragUpdate`,
-  `onDragEnd`, and `onDragCancel`. By default, these methods do nothing -- they need to be
-  overridden in order to perform any function.
+  `onDragEnd`, and `onDragCancel`. By default, these methods do nothing; they need to be overridden
+  in order to perform any function.
 - In addition, the component must implement the `containsLocalPoint()` method (already implemented
-  in `PositionComponent`, so most of the time you don't need to do anything here) -- this method
+  in `PositionComponent`, so most of the time you don't need to do anything here). This method
   allows Flame to know whether the event occurred within the component or not.
 
 ```dart
@@ -58,6 +58,11 @@ local coordinate system.
 Any component that receives `onDragStart` will later be receiving `onDragUpdate` and `onDragEnd`
 events as well.
 
+A drag only starts once the pointer has moved further than the platform's touch slop from the
+point where it went down, so a tap with a slightly wobbling finger is still delivered as a tap and
+not as a drag. When the drag starts, the movement accumulated before that point is delivered in the
+first `onDragUpdate`.
+
 
 ### onDragUpdate
 
@@ -71,9 +76,9 @@ if the user moves their finger away from the component, the property `event.loca
 return a point whose coordinates are NaNs. Likewise, the `event.renderingTrace` in this case will be
 empty. However, the `canvasPosition` and `devicePosition` properties of the event will be valid.
 
-In addition, the `DragUpdateEvent` will contain `delta` -- the amount the finger has moved since the
-previous `onDragUpdate`, or since the `onDragStart` if this is the first drag-update after a drag-
-start.
+In addition, the `DragUpdateEvent` will contain `delta`, the amount the finger has moved since
+the previous `onDragUpdate`, or since the `onDragStart` if this is the first drag-update after
+a drag-start.
 
 The `event.timestamp` property measures the time elapsed since the beginning of the drag. It can be
 used, for example, to compute the speed of the movement.
@@ -113,26 +118,41 @@ method must be implemented manually.
 If your component is a part of a larger hierarchy, then it will only receive drag events if its
 ancestors have all implemented the `containsLocalPoint` correctly.
 
+
+### isDragged
+
+The `DragCallbacks` mixin provides an `isDragged` getter that returns `true` while the component is
+actively being dragged. This is set to `true` at `onDragStart` and back to `false` at `onDragEnd`.
+It can be used, for example, to change the component's visual appearance during a drag.
+
+
+## Combining with ScaleCallbacks
+
+A component can use both `DragCallbacks` and `ScaleCallbacks` at the same time. When both mixins are
+present, single-finger gestures produce drag events and two-finger gestures produce both drag and
+scale events. This is useful for components that should be draggable with one finger and
+pinch-to-zoom or rotatable with two fingers.
+
 ```dart
-class MyComponent extends PositionComponent with DragCallbacks {
-  MyComponent({super.size});
+class InteractiveRectangle extends RectangleComponent
+    with ScaleCallbacks, DragCallbacks {
 
-  final _paint = Paint();
-  bool _isDragged = false;
-
-  @override
-  void onDragStart(DragStartEvent event) => _isDragged = true;
+  double _initialAngle = 0;
 
   @override
-  void onDragUpdate(DragUpdateEvent event) => position += event.delta;
+  void onDragUpdate(DragUpdateEvent event) {
+    position += event.localDelta;
+  }
 
   @override
-  void onDragEnd(DragEndEvent event) => _isDragged = false;
+  void onScaleStart(ScaleStartEvent event) {
+    super.onScaleStart(event);
+    _initialAngle = angle;
+  }
 
   @override
-  void render(Canvas canvas) {
-    _paint.color = _isDragged? Colors.red : Colors.white;
-    canvas.drawRect(size.toRect(), _paint);
+  void onScaleUpdate(ScaleUpdateEvent event) {
+    angle = _initialAngle + event.rotation;
   }
 }
 ```

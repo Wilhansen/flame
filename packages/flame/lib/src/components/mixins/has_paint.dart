@@ -3,8 +3,8 @@ import 'dart:ui';
 
 import 'package:flame/components.dart';
 import 'package:flame/effects.dart';
-import 'package:flame/src/effects/provider_interfaces.dart';
 import 'package:flame/src/palette.dart';
+import 'package:flame/src/rendering/hue_decorator.dart';
 import 'package:meta/meta.dart';
 
 /// Adds a collection of paints and paint layers to a component
@@ -16,11 +16,13 @@ import 'package:meta/meta.dart';
 /// [paintLayers] paints should be drawn in list order during the render. The
 /// main Paint is the first element.
 mixin HasPaint<T extends Object> on Component
-    implements OpacityProvider, PaintProvider {
+    implements OpacityProvider, PaintProvider, HueProvider {
   late final Map<T, Paint> _paints = {};
 
   @override
   Paint paint = BasicPalette.white.paint();
+
+  double _hue = 0.0;
 
   @internal
   List<Paint>? paintLayersInternal;
@@ -111,6 +113,7 @@ mixin HasPaint<T extends Object> on Component
   /// Shortcut for changing the color of the paint.
   void setColor(Color color, {T? paintId}) {
     getPaint(paintId).color = color;
+    onChanged();
   }
 
   /// Applies a color filter to the paint which will make
@@ -118,6 +121,7 @@ mixin HasPaint<T extends Object> on Component
   /// tinted with the given color.
   void tint(Color color, {T? paintId}) {
     getPaint(paintId).colorFilter = ColorFilter.mode(color, BlendMode.srcATop);
+    onChanged();
   }
 
   @override
@@ -129,6 +133,35 @@ mixin HasPaint<T extends Object> on Component
     for (final paint in _paints.values) {
       paint.color = paint.color.withValues(alpha: value);
     }
+    onChanged();
+  }
+
+  @override
+  double get hue => _hue;
+
+  @override
+  set hue(double value) {
+    if (_hue == value) {
+      return;
+    }
+    _hue = value;
+    _updateColorFilter();
+  }
+
+  void _updateColorFilter() {
+    final filter = _hue == 0
+        ? null
+        : ColorFilter.matrix(hueRotationMatrix(_hue));
+    paint.colorFilter = filter;
+    for (final paint in _paints.values) {
+      paint.colorFilter = filter;
+    }
+    if (paintLayersInternal != null) {
+      for (final layerPaint in paintLayersInternal!) {
+        layerPaint.colorFilter = filter;
+      }
+    }
+    onChanged();
   }
 
   /// Creates an [OpacityProvider] for given [paintId] and can be used as
@@ -160,6 +193,12 @@ mixin HasPaint<T extends Object> on Component
       includeLayers: includeLayers,
     );
   }
+
+  /// Can be overridden to react when the [paint] object
+  /// changed.
+  ///
+  /// Default implementation is a no-op.
+  void onChanged() {}
 }
 
 class _ProxyOpacityProvider<T extends Object> implements OpacityProvider {

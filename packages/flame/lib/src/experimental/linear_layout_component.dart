@@ -327,7 +327,7 @@ abstract class LinearLayoutComponent extends LayoutComponent {
   void _mainAxisPositioning({
     required List<PositionComponent> components,
 
-    /// The gap between [components]
+    /// The gap between `components`
     required double gap,
     required Direction direction,
 

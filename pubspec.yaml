@@ -10,12 +10,12 @@ workspace:
   - packages/flame_behavior_tree
   - packages/flame_behavior_tree/behavior_tree
   - packages/flame_behavior_tree/example
+  - packages/flame_gamepads
+  - packages/flame_gamepads/example
   - packages/flame_test
   - packages/flame_test/example
   - packages/flame_tiled
   - packages/flame_tiled/example
-  - packages/flame_oxygen
-  - packages/flame_oxygen/example
   - packages/flame_isolate
   - packages/flame_isolate/example
   - packages/flame_texturepacker
@@ -56,6 +56,8 @@ workspace:
   - packages/flame_riverpod/example
   - packages/flame_svg
   - packages/flame_svg/example
+  - packages/flame_typled
+  - packages/flame_typled/example
   - packages/flame_network_assets
   - packages/flame_network_assets/example
   - packages/flame_3d
@@ -69,10 +71,10 @@ workspace:
   - examples
 
 environment:
-  sdk: ">=3.8.0 <4.0.0"
+  sdk: ">=3.11.0 <4.0.0"
 
 dev_dependencies:
-  melos: ^7.0.0-dev.10
+  melos: ^8.1.0
 
 melos:
   command:
@@ -86,13 +88,13 @@ melos:
 
     bootstrap:
       environment:
-        sdk: ">=3.8.0 <4.0.0"
-        flutter: ">=3.32.0"
+        sdk: ">=3.11.0 <4.0.0"
+        flutter: ">=3.41.0"
       dependencies:
         meta: ^1.12.0
         vector_math: ^2.1.4
       dev_dependencies:
-        dartdoc: ^8.0.8
+        dartdoc: ^9.0.0
         mocktail: ^1.0.4
         test: any
 
@@ -103,13 +105,9 @@ melos:
   scripts:
     lint:all:
       steps:
-        - analyze
+        - melos analyze
         - format
       description: Run all static analysis checks.
-
-    analyze:
-      run: melos exec dart analyze .
-      description: Run `dart analyze` for all packages.
 
     format-check:
       run: melos exec dart format . --set-exit-if-changed
@@ -152,14 +150,10 @@ melos:
       description: Checks whether there are any broken links in the docs.
 
     test:select:
-      run: melos exec -c 1 -- flutter test
+      run: melos exec -c 1 -- flutter test --reporter=json 2>&1 | dart run "$MELOS_ROOT_PATH/scripts/test_formatter.dart"
       packageFilters:
         dirExists: test
       description: Run `flutter test` for selected packages.
-
-    test:
-      run: melos run test:select --no-select
-      description: Run all Flutter tests in this project.
 
     test:seeded:
       run: melos exec -c 1 -- flutter test --dart-define=RANDOM_SEED=$RANDOM_SEED

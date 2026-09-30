@@ -22,9 +22,9 @@ class PolygonComponent extends ShapeComponent {
 
   final _cachedGlobalVertices = ValueCache<List<Vector2>>();
 
-  /// With this constructor you create your [PolygonComponent] from positions in
+  /// With this constructor you create your [PolygonComponent] from positions
   /// anywhere in the 2d-space. It will automatically calculate the [size] of
-  /// the Polygon (the bounding box) if no size it given.
+  /// the Polygon (the bounding box) if no size is given.
   PolygonComponent(
     this._vertices, {
     super.position,
@@ -93,6 +93,42 @@ class PolygonComponent extends ShapeComponent {
          children: children,
        );
 
+  /// With this constructor you create a regular (equiangular and equilateral)
+  /// polygon from number of sides and radius anywhere in the 2d-space. It will
+  /// automatically calculate the [size] of the Polygon (the bounding box) if no
+  /// size is given.
+  PolygonComponent.regular({
+    required int sides,
+    required double radius,
+    Vector2? position,
+    Vector2? size,
+    Vector2? scale,
+    double? angle,
+    Anchor? anchor,
+    Iterable<Component>? children,
+    int? priority,
+    Paint? paint,
+    List<Paint>? paintLayers,
+    ComponentKey? key,
+    bool? shrinkToBounds,
+  }) : this(
+         List.generate(sides, (i) {
+           final angle = tau * i / sides;
+           return Vector2(radius * cos(angle), radius * sin(angle));
+         }, growable: false),
+         position: position,
+         size: size,
+         scale: scale,
+         angle: angle,
+         anchor: anchor,
+         children: children,
+         priority: priority,
+         paint: paint,
+         paintLayers: paintLayers,
+         key: key,
+         shrinkToBounds: shrinkToBounds,
+       );
+
   @internal
   static List<Vector2> normalsToVertices(
     List<Vector2> normals,
@@ -153,7 +189,7 @@ class PolygonComponent extends ShapeComponent {
   List<Vector2> globalVertices() {
     final scale = absoluteScale;
     final shouldReverse = scale.y.isNegative ^ scale.x.isNegative;
-    final angle = absoluteAngleWithoutReflection;
+    final angle = absoluteAngle;
     final position = absoluteTopLeftPosition;
     if (!_cachedGlobalVertices.isCacheValid<dynamic>(<dynamic>[
       position,
@@ -162,12 +198,7 @@ class PolygonComponent extends ShapeComponent {
       angle,
     ])) {
       for (var i = 0; i < _vertices.length; i++) {
-        final vertex = _vertices[i];
-        _globalVertices[i]
-          ..setFrom(vertex)
-          ..multiply(scale)
-          ..add(position)
-          ..rotate(angle, center: position);
+        _globalVertices[i].setFrom(absolutePositionOf(_vertices[i]));
       }
       if (shouldReverse) {
         // Since the list will be clockwise we have to reverse it for it to

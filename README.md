@@ -18,7 +18,6 @@ A Flutter-based game engine.
 
 <p align="center">
   <a title="Pub" href="https://pub.dev/packages/flame"><img src="https://img.shields.io/pub/v/flame.svg?style=popout"/></a>
-  <a title="Shorebird CI" href="https://console.shorebird.dev/ci"><img src="https://api.shorebird.dev/api/v1/github/flame-engine/flame/badge.svg"/></a>
   <a title="Test" href="https://github.com/flame-engine/flame/actions?query=workflow%3Acicd+branch%3Amain"><img src="https://github.com/flame-engine/flame/actions/workflows/cicd.yml/badge.svg?branch=main&event=push"/></a>
   <a title="Discord" href="https://discord.gg/pxrBmy4"><img src="https://img.shields.io/discord/509714518008528896.svg"/></a>
   <a title="Melos" href="https://github.com/invertase/melos"><img src="https://img.shields.io/badge/maintained%20with-melos-f700ff.svg"/></a>
@@ -89,14 +88,13 @@ simultaneously.
 - [flame_bloc][flame_bloc] for [Bloc][bloc]: A predictable state management library.
 - [flame_fire_atlas][flame_fire_atlas] for [FireAtlas][fireatlas]: Create texture atlases for games.
 - [flame_forge2d][flame_forge2d] for [Forge2D][forge2d]: A Box2D physics engine.
+- [flame_gamepads][flame_gamepads] - Support gamepad input in your game (bridge package for [gamepads][gamepads])
 - [flame_isolate][flame_isolate] - Makes it easy to use [Flutter Isolates][flutter_isolates] in
 a Flame game.
 - [flame_lint][flame_lint] - Our set of linting (`analysis_options.yaml`) rules.
 - [flame_lottie][flame_lottie] - Support for [Lottie][lottie] animation in Flame.
 - [flame_network_assets][flame_network_assets] - Helpers to load game assets from
 network.
-- [flame_oxygen][flame_oxygen] for [Oxygen][oxygen]: A lightweight Entity Component System (ECS)
-framework.
 - [flame_rive][flame_rive] for [Rive][rive]: Create interactive animations.
 - [flame_svg][flame_svg] for [flutter_svg][flutter_svg]: Draw SVG files in Flutter.
 - [flame_texturepacker][flame_texturepacker]: Load and use sprite sheets generated with [TexturePacker][texturepacker]
@@ -183,14 +181,14 @@ via an issue, GitHub discussion, or reach out to the team either using the
 [fireatlas]: https://github.com/flame-engine/fire-atlas
 [flame_forge2d]: https://github.com/flame-engine/flame/tree/main/packages/flame_forge2d
 [forge2d]: https://github.com/flame-engine/forge2d
+[flame_gamepads]: https://github.com/flame-engine/flame/tree/main/packages/flame_gamepads
+[gamepads]: https://github.com/flame-engine/gamepads
 [flame_isolate]: https://github.com/flame-engine/flame/tree/main/packages/flame_isolate
 [flutter_isolates]: https://api.flutter.dev/flutter/dart-isolate/Isolate-class.html
 [flame_lint]: https://github.com/flame-engine/flame/tree/main/packages/flame_lint
 [flame_lottie]: https://github.com/flame-engine/flame/tree/main/packages/flame_lottie
 [lottie]: https://airbnb.design/lottie/
 [flame_network_assets]: https://github.com/flame-engine/flame/tree/main/packages/flame_network_assets
-[flame_oxygen]: https://github.com/flame-engine/flame/tree/main/packages/flame_oxygen
-[oxygen]: https://github.com/flame-engine/oxygen
 [flame_rive]: https://github.com/flame-engine/flame/tree/main/packages/flame_rive
 [rive]: https://rive.app/
 [flame_svg]: https://github.com/flame-engine/flame/tree/main/packages/flame_svg

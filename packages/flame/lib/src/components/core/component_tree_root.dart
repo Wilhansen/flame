@@ -31,19 +31,30 @@ class ComponentTreeRoot extends Component {
       ..parent = parent;
   }
 
+  /// Cancels the pending ADD event for [child] into [parent].
+  ///
+  /// Scans the queue without using its iterator, so this is safe to call while
+  /// [processLifecycleEvents] is iterating over the queue (for example from a
+  /// component's [Component.onMount]).
   @internal
   void dequeueAdd(Component child, Component parent) {
-    for (final event in queue) {
-      if (event.kind == LifecycleEventKind.add &&
+    var found = false;
+    queue.forEachWhere(
+      (event) =>
+          !found &&
+          event.kind == LifecycleEventKind.add &&
           event.child == child &&
-          event.parent == parent) {
+          event.parent == parent,
+      (event) {
         event.kind = LifecycleEventKind.unknown;
-        return;
-      }
-    }
-    throw AssertionError(
-      'Cannot find a lifecycle event Add(child=$child, parent=$parent)',
+        found = true;
+      },
     );
+    if (!found) {
+      throw AssertionError(
+        'Cannot find a lifecycle event Add(child=$child, parent=$parent)',
+      );
+    }
   }
 
   @internal
@@ -54,13 +65,39 @@ class ComponentTreeRoot extends Component {
       ..parent = parent;
   }
 
+  /// Cancels all pending REMOVE events for [child].
+  ///
+  /// Scans the queue without using its iterator, so this is safe to call while
+  /// [processLifecycleEvents] is iterating over the queue (for example from a
+  /// component's [Component.onMount]).
   @internal
   void dequeueRemove(Component child) {
-    for (final event in queue) {
-      if (event.kind == LifecycleEventKind.remove && event.child == child) {
+    queue.forEachWhere(
+      (event) =>
+          event.kind == LifecycleEventKind.remove && event.child == child,
+      (event) => event.kind = LifecycleEventKind.unknown,
+    );
+  }
+
+  /// Finds all children in [candidates] that have a pending REMOVE event,
+  /// cancels those events, and adds the matched children to [result].
+  ///
+  /// Scans the queue once in O(Q) time. Safe to call during queue iteration.
+  @internal
+  void cancelQueuedRemoves(
+    List<Component> candidates,
+    Set<Component> result,
+  ) {
+    final candidateSet = candidates.toSet();
+    queue.forEachWhere(
+      (event) =>
+          event.kind == LifecycleEventKind.remove &&
+          candidateSet.contains(event.child),
+      (event) {
+        result.add(event.child!);
         event.kind = LifecycleEventKind.unknown;
-      }
-    }
+      },
+    );
   }
 
   @internal
@@ -167,12 +204,26 @@ class ComponentTreeRoot extends Component {
   @internal
   void handleResize(Vector2 size) {
     super.handleResize(size);
-    for (final event in queue) {
-      if ((event.kind == LifecycleEventKind.add) &&
-          (event.child!.isLoading || event.child!.isLoaded)) {
-        event.child!.onGameResize(size);
-      }
-    }
+    queue.forEachWhere(
+      _isPendingAddOfLoadingOrLoadedChild,
+      (event) => event.child!.onGameResize(size),
+    );
+  }
+
+  @mustCallSuper
+  @override
+  @internal
+  void handleHotReload() {
+    super.handleHotReload();
+    queue.forEachWhere(
+      _isPendingAddOfLoadingOrLoadedChild,
+      (event) => event.child!.onHotReload(),
+    );
+  }
+
+  static bool _isPendingAddOfLoadingOrLoadedChild(LifecycleEvent event) {
+    return event.kind == LifecycleEventKind.add &&
+        (event.child!.isLoading || event.child!.isLoaded);
   }
 
   @mustCallSuper
