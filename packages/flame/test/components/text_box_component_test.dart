@@ -1,9 +1,8 @@
-import 'dart:ui';
-
 import 'package:canvas_test/canvas_test.dart';
 import 'package:flame/components.dart';
 import 'package:flame/palette.dart';
 import 'package:flame_test/flame_test.dart';
+import 'package:flutter/painting.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
@@ -29,7 +28,8 @@ void main() {
       );
 
       expect(c.size.x, 100 + 2 * 8);
-      expect(c.size.y, 256);
+      expect(c.lines.length, greaterThan(2));
+      expect(c.size.y, greaterThan(50));
     });
 
     test('lines are properly computed with new line character', () {
@@ -40,10 +40,93 @@ void main() {
         ),
       );
 
+      // TextPainter preserves trailing spaces before line breaks
       expect(
         c.lines,
-        ['The quick brown', 'fox ', ' jumps over the', 'lazy dog.'],
+        ['The quick brown ', 'fox ', ' jumps over the ', 'lazy dog.'],
       );
+    });
+
+    test('Chinese text wraps correctly without spaces', () {
+      const maxWidth = 100.0;
+      final c = TextBoxComponent(
+        text:
+            '''编写这些测试的人明显是一个天才（而且非常谦虚）。他们值得终生免费咖啡。这些测试需要奥妙的智慧、无穷的耐心和可能太多的咖啡因。''',
+        textRenderer: TextPaint(
+          style: const TextStyle(fontSize: 16),
+        ),
+        boxConfig: const TextBoxConfig(
+          maxWidth: maxWidth,
+        ),
+      );
+
+      // With the fix, Chinese text should wrap across multiple lines
+      // Without the fix, it would be a single long line
+      expect(c.lines.length, greaterThan(1));
+
+      // Each line should be shorter than maxWidth
+      for (final line in c.lines) {
+        final lineMetrics = c.textRenderer.getLineMetrics(line);
+        expect(
+          lineMetrics.width,
+          lessThanOrEqualTo(maxWidth),
+          reason: 'Line "$line" exceeds maxWidth',
+        );
+      }
+    });
+
+    test('Japanese text wraps correctly without spaces', () {
+      const maxWidth = 100.0;
+      final c = TextBoxComponent(
+        text:
+            '''これらのテストを書いた人は明らかに天才です（そしてとても謙虚です）。彼らは生涉無料コーヒーを受けるに値します。これらのテストは絶妙な知恵、無限の忍耐、そしておそらくカフェインの取りすぎが必要でした。''',
+        textRenderer: TextPaint(
+          style: const TextStyle(fontSize: 16),
+        ),
+        boxConfig: const TextBoxConfig(
+          maxWidth: maxWidth,
+        ),
+      );
+
+      // Japanese text should also wrap across multiple lines
+      expect(c.lines.length, greaterThan(1));
+
+      // Each line should be shorter than maxWidth
+      for (final line in c.lines) {
+        final lineMetrics = c.textRenderer.getLineMetrics(line);
+        expect(
+          lineMetrics.width,
+          lessThanOrEqualTo(maxWidth),
+          reason: 'Line "$line" exceeds maxWidth',
+        );
+      }
+    });
+
+    test('Korean text wraps correctly without spaces', () {
+      const maxWidth = 100.0;
+      final c = TextBoxComponent(
+        text:
+            '''이테스트를작성한사람은분명천재입니다（그리고매우겸손합니다）。그들은평생무료커피를받을자격이있습니다。이테스트들은놀라운지혜와무한한인내심그리고아마도너무많은카페인이필요했습니다。''',
+        textRenderer: TextPaint(
+          style: const TextStyle(fontSize: 16),
+        ),
+        boxConfig: const TextBoxConfig(
+          maxWidth: maxWidth,
+        ),
+      );
+
+      // Korean text should also wrap across multiple lines
+      expect(c.lines.length, greaterThan(1));
+
+      // Each line should be shorter than maxWidth
+      for (final line in c.lines) {
+        final lineMetrics = c.textRenderer.getLineMetrics(line);
+        expect(
+          lineMetrics.width,
+          lessThanOrEqualTo(maxWidth),
+          reason: 'Line "$line" exceeds maxWidth',
+        );
+      }
     });
 
     test('boxConfig gets set', () {
@@ -62,6 +145,20 @@ void main() {
         c.boxConfig,
         secondConfig,
       );
+    });
+
+    test('maxWidth causes text reflow', () async {
+      const firstConfig = TextBoxConfig();
+      const secondConfig = TextBoxConfig(maxWidth: 640);
+      final c = TextBoxComponent(
+        text: 'The quick brown fox jumps over the lazy dog.',
+        boxConfig: firstConfig,
+        textRenderer: TextPaint(
+          style: const TextStyle(fontSize: 10),
+        ),
+      );
+      c.boxConfig = secondConfig;
+      expect(c.lines.length, 1);
     });
 
     test('skip method sets boxConfig timePerChar to 0', () {
@@ -111,12 +208,11 @@ void main() {
       game.render(canvas); // this should render the cache
       expect(
         canvas,
-        MockCanvas(mode: AssertionMode.containsAnyOrder)
-          ..drawImage(
-            null,
-            Offset.zero,
-            BasicPalette.white.paint(),
-          ),
+        MockCanvas(mode: AssertionMode.containsAnyOrder)..drawImage(
+          null,
+          Offset.zero,
+          BasicPalette.white.paint(),
+        ),
       );
     });
 
@@ -139,6 +235,31 @@ void main() {
     );
 
     testWithFlameGame(
+      'does not throw if the cached image was already disposed '
+      '(regression #3724)',
+      (game) async {
+        final c = TextBoxComponent(text: 'foo bar');
+
+        await game.ensureAdd(c);
+        final imageCache = c.cache;
+        expect(imageCache, isNotNull);
+
+        // Simulate the native peer being collected before our delayed
+        // dispose / onRemove runs by disposing the cached image first.
+        imageCache!.dispose();
+        expect(imageCache.debugDisposed, isTrue);
+
+        // Removing the component must not crash even though dispose() on the
+        // already-disposed image would normally throw a StateError.
+        expect(() {
+          game.remove(c);
+          game.update(0);
+        }, returnsNormally);
+        expect(c.cache, null);
+      },
+    );
+
+    testWithFlameGame(
       'internal image is redrawn when component is re-added',
       (game) async {
         final c = TextBoxComponent(text: 'foo bar');
@@ -156,28 +277,30 @@ void main() {
     );
 
     testWithFlameGame(
-        'TextBoxComponent notifies if a new line is added and requires space',
-        (game) async {
-      var lineSize = 0.0;
-      final textBoxComponent = TextBoxComponent(
-        size: Vector2(50, 50),
-        text: '''This 
+      'TextBoxComponent notifies if a new line is added and requires space',
+      (game) async {
+        var lineSize = 0.0;
+        final textBoxComponent = TextBoxComponent(
+          size: Vector2(50, 50),
+          text: '''This 
 test
 has
 five
 lines.''',
-      );
-      expect(textBoxComponent.newLinePositionNotifier.value, equals(0));
+        );
+        expect(textBoxComponent.newLinePositionNotifier.value, equals(0));
 
-      textBoxComponent.newLinePositionNotifier.addListener(() {
-        lineSize += textBoxComponent.newLinePositionNotifier.value;
-      });
-      await game.ensureAdd(textBoxComponent);
-      expect(lineSize, greaterThan(0));
-    });
+        textBoxComponent.newLinePositionNotifier.addListener(() {
+          lineSize += textBoxComponent.newLinePositionNotifier.value;
+        });
+        await game.ensureAdd(textBoxComponent);
+        expect(lineSize, greaterThan(0));
+      },
+    );
 
-    testWithFlameGame('TextBoxComponent skips to the end of text',
-        (game) async {
+    testWithFlameGame('TextBoxComponent skips to the end of text', (
+      game,
+    ) async {
       final textBoxComponent1 = TextBoxComponent(
         text: 'aaa',
         boxConfig: const TextBoxConfig(timePerChar: 1.0),
@@ -205,6 +328,35 @@ lines.''',
       expect(textBoxComponent2.finished, true);
     });
 
+    testWithFlameGame(
+      'TextBoxComponent resets animation to the start of text',
+      (
+        game,
+      ) async {
+        final textBoxComponent1 = TextBoxComponent(
+          text: 'aaa',
+          boxConfig: const TextBoxConfig(timePerChar: 1.0),
+        );
+        await game.ensureAdd(textBoxComponent1);
+        // forward time by 2.5 seconds
+        game.update(2.5);
+        expect(textBoxComponent1.finished, false);
+        // flush
+        game.update(0.6);
+        expect(textBoxComponent1.finished, true);
+        // reset animation
+        textBoxComponent1.resetAnimation();
+        // 'finished' state should reset immediately
+        expect(textBoxComponent1.finished, false);
+        expect(textBoxComponent1.currentChar, 0);
+        expect(textBoxComponent1.currentLine, 0);
+        game.update(2.5);
+        expect(textBoxComponent1.finished, false);
+        game.update(0.6);
+        expect(textBoxComponent1.finished, true);
+      },
+    );
+
     testGolden(
       'Alignment options',
       (game, tester) async {
@@ -229,21 +381,24 @@ lines.''',
           ),
           _FramedTextBox(
             // cSpell:ignore runn'st (old english)
-            text: 'To move is to stir, and to be valiant is to stand. '
+            text:
+                'To move is to stir, and to be valiant is to stand. '
                 "Therefore, if thou art moved, thou runn'st away.",
             position: Vector2(10, 370),
             size: Vector2(390, 220),
             align: Anchor.bottomRight,
           ),
           _FramedTextBox(
-            text: 'A dog of that house shall move me to stand. I will take '
+            text:
+                'A dog of that house shall move me to stand. I will take '
                 'the wall of any man or maid of Montague‘s.',
             position: Vector2(410, 10),
             size: Vector2(380, 300),
             align: Anchor.center,
           ),
           _FramedTextBox(
-            text: 'That shows thee a weak slave; for the weakest goes to the '
+            text:
+                'That shows thee a weak slave; for the weakest goes to the '
                 'wall.',
             position: Vector2(410, 320) + Vector2(380, 270),
             size: Vector2(380, 270),
@@ -279,8 +434,8 @@ class _FramedTextBox extends TextBoxComponent {
     super.size,
     super.anchor,
   }) : super(
-          textRenderer: DebugTextRenderer(fontSize: 22),
-        );
+         textRenderer: DebugTextRenderer(fontSize: 22),
+       );
 
   final Paint _borderPaint = Paint()
     ..style = PaintingStyle.stroke

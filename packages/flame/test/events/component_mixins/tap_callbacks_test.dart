@@ -7,12 +7,13 @@ import 'package:flutter_test/flutter_test.dart';
 void main() {
   group('TapCallbacks', () {
     testWithFlameGame(
-        'make sure TapCallback components can be added to a FlameGame',
-        (game) async {
-      await game.ensureAdd(_TapCallbacksComponent());
-      await game.ready();
-      expect(game.children.toList()[2], isA<MultiTapDispatcher>());
-    });
+      'make sure TapCallback components can be added to a FlameGame',
+      (game) async {
+        await game.ensureAdd(_TapCallbacksComponent());
+        await game.ready();
+        expect(game.children.toList()[2], isA<MultiTapDispatcher>());
+      },
+    );
 
     testWithFlameGame('tap event start', (game) async {
       final component = _TapCallbacksComponent()
@@ -25,12 +26,12 @@ void main() {
 
       expect(game.children.whereType<MultiTapDispatcher>().length, equals(1));
       game.firstChild<MultiTapDispatcher>()!.onTapDown(
-            createTapDownEvents(
-              game: game,
-              localPosition: const Offset(12, 12),
-              globalPosition: const Offset(12, 12),
-            ),
-          );
+        createTapDownEvents(
+          game: game,
+          localPosition: const Offset(12, 12),
+          globalPosition: const Offset(12, 12),
+        ),
+      );
       expect(component.containsLocalPoint(Vector2(10, 10)), false);
     });
 
@@ -148,6 +149,63 @@ void main() {
         expect(component.tapDownEvent, equals(0));
         expect(component.tapUpEvent, equals(0));
         expect(component.longTapDownEvent, equals(0));
+        expect(component.tapCancelEvent, equals(0));
+      },
+    );
+
+    testWidgets(
+      'tap that starts inside the component and ends outside is cancelled',
+      (tester) async {
+        final component = _TapCallbacksComponent()
+          ..x = 10
+          ..y = 10
+          ..width = 10
+          ..height = 10;
+        final game = FlameGame(children: [component]);
+        await tester.pumpWidget(GameWidget(game: game));
+        await tester.pump();
+        await tester.pump();
+        expect(component.isMounted, isTrue);
+
+        final gesture = await tester.startGesture(const Offset(10, 10));
+        await tester.pump(const Duration(milliseconds: 500));
+        await gesture.moveTo(const Offset(10, 9));
+        await tester.pump(const Duration(milliseconds: 500));
+        await gesture.up();
+
+        await tester.pump();
+
+        expect(component.tapDownEvent, equals(1));
+        expect(component.tapUpEvent, equals(0));
+        expect(component.tapCancelEvent, equals(1));
+      },
+    );
+
+    testWidgets(
+      'tap that starts and ends in different positions'
+      ' inside the component is handled',
+      (tester) async {
+        final component = _TapCallbacksComponent()
+          ..x = 10
+          ..y = 10
+          ..width = 10
+          ..height = 10;
+        final game = FlameGame(children: [component]);
+        await tester.pumpWidget(GameWidget(game: game));
+        await tester.pump();
+        await tester.pump();
+        expect(component.isMounted, isTrue);
+
+        final gesture = await tester.startGesture(const Offset(10, 10));
+        await tester.pump(const Duration(milliseconds: 500));
+        await gesture.moveTo(const Offset(10, 11));
+        await tester.pump(const Duration(milliseconds: 500));
+        await gesture.up();
+
+        await tester.pump();
+
+        expect(component.tapDownEvent, equals(1));
+        expect(component.tapUpEvent, equals(1));
         expect(component.tapCancelEvent, equals(0));
       },
     );
@@ -449,10 +507,10 @@ class _TapWithCallbacksComponent extends PositionComponent with TapCallbacks {
     void Function(TapDownEvent)? onLongTapDown,
     void Function(TapUpEvent)? onTapUp,
     void Function(TapCancelEvent)? onTapCancel,
-  })  : _onTapDown = onTapDown,
-        _onLongTapDown = onLongTapDown,
-        _onTapUp = onTapUp,
-        _onTapCancel = onTapCancel;
+  }) : _onTapDown = onTapDown,
+       _onLongTapDown = onLongTapDown,
+       _onTapUp = onTapUp,
+       _onTapCancel = onTapCancel;
 
   final void Function(TapDownEvent)? _onTapDown;
   final void Function(TapDownEvent)? _onLongTapDown;
@@ -484,18 +542,21 @@ mixin _TapCounter on TapCallbacks {
 
   @override
   void onTapDown(TapDownEvent event) {
+    expect(event.raw, isNotNull);
     event.handled = true;
     tapDownEvent++;
   }
 
   @override
   void onLongTapDown(TapDownEvent event) {
+    expect(event.raw, isNotNull);
     event.handled = true;
     longTapDownEvent++;
   }
 
   @override
   void onTapUp(TapUpEvent event) {
+    expect(event.raw, isNotNull);
     event.handled = true;
     tapUpEvent++;
   }

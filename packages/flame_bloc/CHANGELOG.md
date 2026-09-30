@@ -1,3 +1,43 @@
+## 1.12.24
+
+ - **FIX**: Bloc instance was null on initial state ([#3921](https://github.com/flame-engine/flame/issues/3921)). ([8adeea69](https://github.com/flame-engine/flame/commit/8adeea69764002e763a4a9236945c2b8f57a8a3b))
+
+## 1.12.23
+
+ - Update a dependency to the latest release.
+
+## 1.12.22
+
+ - **FIX**: Bump Flutter min version to 3.41.0 ([#3807](https://github.com/flame-engine/flame/issues/3807)). ([0d505304](https://github.com/flame-engine/flame/commit/0d50530485e5be9ce1c9138a5b437607c7c5c628))
+
+## 1.12.21
+
+ - Update a dependency to the latest release.
+
+## 1.12.20
+
+ - Update a dependency to the latest release.
+
+## 1.12.19
+
+ - Update a dependency to the latest release.
+
+## 1.12.18
+
+ - Update a dependency to the latest release.
+
+## 1.12.17
+
+ - Update a dependency to the latest release.
+
+## 1.12.16
+
+ - Update a dependency to the latest release.
+
+## 1.12.15
+
+ - Update a dependency to the latest release.
+
 ## 1.12.14
 
  - Update a dependency to the latest release.

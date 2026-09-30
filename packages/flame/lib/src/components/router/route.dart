@@ -27,9 +27,9 @@ class Route extends PositionComponent
     Component Function()? loadingBuilder,
     this.transparent = false,
     this.maintainState = true,
-  })  : _builder = builder,
-        _loadingBuilder = loadingBuilder,
-        _renderEffect = Decorator();
+  }) : _builder = builder,
+       _loadingBuilder = loadingBuilder,
+       _renderEffect = Decorator();
 
   /// If true, then the route below this one will continue to be rendered when
   /// this route becomes active. If false, then this route is assumed to
@@ -143,7 +143,7 @@ class Route extends PositionComponent
   /// Adds the [_loadingPage] to the parent and invoked by [didPush] , when
   /// [_loadingBuilder] is specified
   Future<void> _addLoadingPage() async {
-    _loadingPage ??= _loadingBuilder!()..addToParent(this);
+    (_loadingPage ??= _loadingBuilder!()).addToParent(this);
     await _loadingPage!.loaded;
     await add(_page!);
     await _page!.loaded;

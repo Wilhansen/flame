@@ -2,7 +2,7 @@ import 'package:flame/src/game/game.dart';
 import 'package:flame/src/gestures/events.dart';
 import 'package:flutter/gestures.dart';
 
-// Basic touch detectors
+@Deprecated('Use TapCallbacks instead')
 mixin TapDetector on Game {
   void onTap() {}
   void onTapCancel() {}
@@ -18,6 +18,7 @@ mixin TapDetector on Game {
   }
 }
 
+@Deprecated('Use SecondaryTapCallbacks instead')
 mixin SecondaryTapDetector on Game {
   void onSecondaryTapDown(TapDownInfo info) {}
   void onSecondaryTapUp(TapUpInfo info) {}
@@ -32,6 +33,7 @@ mixin SecondaryTapDetector on Game {
   }
 }
 
+@Deprecated('Use TertiaryTapCallbacks instead')
 mixin TertiaryTapDetector on Game {
   void onTertiaryTapDown(TapDownInfo info) {}
   void onTertiaryTapUp(TapUpInfo info) {}
@@ -46,6 +48,7 @@ mixin TertiaryTapDetector on Game {
   }
 }
 
+@Deprecated('Use DoubleTapCallbacks instead')
 mixin DoubleTapDetector on Game {
   void onDoubleTap() {}
   void onDoubleTapCancel() {}
@@ -56,6 +59,7 @@ mixin DoubleTapDetector on Game {
   }
 }
 
+@Deprecated('Use LongPressCallbacks instead')
 mixin LongPressDetector on Game {
   void onLongPress() {}
   void onLongPressStart(LongPressStartInfo info) {}

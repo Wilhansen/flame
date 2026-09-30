@@ -1,3 +1,43 @@
+## 0.3.4+23
+
+ - Update a dependency to the latest release.
+
+## 0.3.3+22
+
+ - Update a dependency to the latest release.
+
+## 0.3.3+21
+
+ - **FIX**: Bump Flutter min version to 3.41.0 ([#3807](https://github.com/flame-engine/flame/issues/3807)). ([0d505304](https://github.com/flame-engine/flame/commit/0d50530485e5be9ce1c9138a5b437607c7c5c628))
+
+## 0.3.3+20
+
+ - Update a dependency to the latest release.
+
+## 0.3.3+19
+
+ - Update a dependency to the latest release.
+
+## 0.3.3+18
+
+ - **FIX**: Not re-encode image when saving ([#3780](https://github.com/flame-engine/flame/issues/3780)). ([30a344cf](https://github.com/flame-engine/flame/commit/30a344cfae78c6608713d4b194f3112e47068adf))
+
+## 0.3.3+17
+
+ - **DOCS**: Deprecate TapDetector in favour of TapCallbacks ([#2886](https://github.com/flame-engine/flame/issues/2886)). ([b173697b](https://github.com/flame-engine/flame/commit/b173697bfb7ea61287251c43cd3c9d2fdb448fe3))
+
+## 0.3.3+16
+
+ - Update a dependency to the latest release.
+
+## 0.3.3+15
+
+ - Update a dependency to the latest release.
+
+## 0.3.3+14
+
+ - Update a dependency to the latest release.
+
 ## 0.3.3+13
 
  - Update a dependency to the latest release.

@@ -1,5 +1,4 @@
 import 'dart:math' as math;
-import 'dart:ui';
 
 import 'package:flame_3d/components.dart';
 import 'package:flame_3d/game.dart';
@@ -9,25 +8,25 @@ class Line3D extends MeshComponent {
   Line3D._({
     required double radius,
     required double height,
-    required Color color,
+    required Material material,
   }) : super(
-          mesh: CylinderMesh(
-            radius: radius,
-            height: height,
-            material: SpatialMaterial()..albedoColor = color,
-          ),
-        );
+         mesh: CylinderMesh(
+           radius: radius,
+           height: height,
+           material: material,
+         ),
+       );
 
   factory Line3D.generate({
     required Vector3 start,
     required Vector3 end,
-    required Color color,
+    required Material material,
     double radius = 0.01,
   }) {
     final line = Line3D._(
       radius: radius,
       height: start.distanceTo(end),
-      color: color,
+      material: material,
     );
     line.transform.setFrom(_calculateTransform(start, end));
     return line;
@@ -78,8 +77,8 @@ class Line3D extends MeshComponent {
   }
 
   static Matrix4 _rotateAroundPoint(Matrix4 rotation, Vector3 point) {
-    return Matrix4.translation(point)
-        .multiplied(rotation)
-        .multiplied(Matrix4.translation(-point));
+    return Matrix4.translation(
+      point,
+    ).multiplied(rotation).multiplied(Matrix4.translation(-point));
   }
 }

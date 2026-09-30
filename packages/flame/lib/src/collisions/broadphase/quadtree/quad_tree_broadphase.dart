@@ -3,15 +3,17 @@ import 'dart:collection';
 import 'package:flame/collisions.dart';
 import 'package:flame/extensions.dart';
 
-typedef ExternalBroadphaseCheck = bool Function(
-  ShapeHitbox first,
-  ShapeHitbox second,
-);
+typedef ExternalBroadphaseCheck =
+    bool Function(
+      ShapeHitbox first,
+      ShapeHitbox second,
+    );
 
-typedef ExternalMinDistanceCheck = bool Function(
-  Vector2 activeItemCenter,
-  Vector2 potentialCenter,
-);
+typedef ExternalMinDistanceCheck =
+    bool Function(
+      Vector2 activeItemCenter,
+      Vector2 potentialCenter,
+    );
 
 /// Performs Quad Tree broadphase check.
 ///
@@ -25,10 +27,10 @@ class QuadTreeBroadphase extends Broadphase<ShapeHitbox> {
     int maxObjects = 25,
     int maxDepth = 10,
   }) : tree = QuadTree<ShapeHitbox>(
-          mainBoxSize: mainBoxSize,
-          maxObjects: maxObjects,
-          maxDepth: maxDepth,
-        );
+         mainBoxSize: mainBoxSize,
+         maxObjects: maxObjects,
+         maxDepth: maxDepth,
+       );
 
   final QuadTree<ShapeHitbox> tree;
 
@@ -40,7 +42,7 @@ class QuadTreeBroadphase extends Broadphase<ShapeHitbox> {
 
   final _cachedCenters = <ShapeHitbox, Vector2>{};
 
-  final _potentials = <int, CollisionProspect<ShapeHitbox>>{};
+  final _potentials = <CollisionProspect<ShapeHitbox>>{};
   final _potentialsTmp = <ShapeHitbox>[];
   final _prospectPool = ProspectPool<ShapeHitbox>();
 
@@ -51,6 +53,7 @@ class QuadTreeBroadphase extends Broadphase<ShapeHitbox> {
   Iterable<CollisionProspect<ShapeHitbox>> query() {
     _potentials.clear();
     _potentialsTmp.clear();
+    _prospectPool.reset();
 
     for (final activeItem in activeHitboxes) {
       if (activeItem.isRemoving || !activeItem.isMounted) {
@@ -94,12 +97,8 @@ class QuadTreeBroadphase extends Broadphase<ShapeHitbox> {
         final item0 = _potentialsTmp[i];
         final item1 = _potentialsTmp[i + 1];
         if (broadphaseCheck(item0, item1)) {
-          final CollisionProspect<ShapeHitbox> prospect;
-          if (_prospectPool.length <= i) {
-            _prospectPool.expand(item0);
-          }
-          prospect = _prospectPool[i]..set(item0, item1);
-          _potentials[prospect.hash] = prospect;
+          final prospect = _prospectPool.acquire(item0, item1);
+          _potentials.add(prospect);
         } else {
           if (_broadphaseCheckCache[item0] == null) {
             _broadphaseCheckCache[item0] = {};
@@ -108,7 +107,7 @@ class QuadTreeBroadphase extends Broadphase<ShapeHitbox> {
         }
       }
     }
-    return _potentials.values;
+    return _potentials;
   }
 
   void updateTransform(ShapeHitbox item) {

@@ -13,7 +13,7 @@ class HasQuadTreeCollidablesGame extends FlameGame
 class CollisionDetectionWorld extends World with HasCollisionDetection {}
 
 @isTest
-Future<void> testCollisionDetectionGame(
+void testCollisionDetectionGame(
   String testName,
   Future<void> Function(HasCollidablesGame) testBody,
 ) {
@@ -21,7 +21,7 @@ Future<void> testCollisionDetectionGame(
 }
 
 @isTest
-Future<void> testQuadTreeCollisionDetectionGame(
+void testQuadTreeCollisionDetectionGame(
   String testName,
   Future<void> Function(HasCollisionDetection) testBody,
 ) {
@@ -110,11 +110,11 @@ class TestBlock extends PositionComponent with CollisionCallbacks {
     super.children,
     this.name,
     bool Function(PositionComponent other)? onComponentTypeCheck,
-  })  : _onComponentTypeCheck = onComponentTypeCheck,
-        super(
-          position: position,
-          size: size,
-        ) {
+  }) : _onComponentTypeCheck = onComponentTypeCheck,
+       super(
+         position: position,
+         size: size,
+       ) {
     children.register<ShapeHitbox>();
     if (addTestHitbox) {
       add(hitbox..collisionType = type);

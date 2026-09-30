@@ -20,8 +20,8 @@ class PositionProviderImpl implements PositionProvider {
   PositionProviderImpl({
     Vector2 Function()? getValue,
     void Function(Vector2)? setValue,
-  })  : _getter = getValue,
-        _setter = setValue;
+  }) : _getter = getValue,
+       _setter = setValue;
 
   final Vector2 Function()? _getter;
   final void Function(Vector2)? _setter;
@@ -93,4 +93,10 @@ abstract class OpacityProvider {
 abstract class PaintProvider {
   Paint get paint;
   set paint(Paint value);
+}
+
+/// Interface for a component that can be affected by hue effects.
+abstract class HueProvider {
+  double get hue;
+  set hue(double value);
 }

@@ -9,11 +9,7 @@ import 'package:flame/palette.dart';
 import 'package:flutter/material.dart';
 
 class RaytraceExample extends FlameGame
-    with
-        HasCollisionDetection,
-        TapDetector,
-        MouseMovementDetector,
-        TapDetector {
+    with HasCollisionDetection, MouseMovementDetector, TapCallbacks {
   static const description = '''
 In this example the raytrace functionality is showcased.
 Click to start sending out a ray which will bounce around to visualize how it
@@ -54,8 +50,9 @@ bounce on will appear.
 
   bool isClicked = false;
   final extraChildren = <Component>[];
+
   @override
-  void onTap() {
+  void onTapDown(_) {
     if (!isClicked) {
       isClicked = true;
       return;
@@ -63,63 +60,62 @@ bounce on will appear.
     _timePassed = 0;
     if (extraChildren.isEmpty) {
       addAll(
-        extraChildren
-          ..addAll(
-            [
-              CircleComponent(
-                position: Vector2(100, 100),
-                radius: 50,
-                paint: boxPaint,
-                children: [CircleHitbox()],
-              ),
-              CircleComponent(
-                position: Vector2(150, 500),
-                radius: 50,
-                paint: boxPaint,
-                anchor: Anchor.center,
-                children: [CircleHitbox()],
-              ),
-              CircleComponent(
-                position: Vector2(150, 500),
-                radius: 150,
-                paint: boxPaint,
-                anchor: Anchor.center,
-                children: [CircleHitbox()],
-              ),
-              RectangleComponent(
-                position: Vector2.all(300),
-                size: Vector2.all(100),
-                paint: boxPaint,
-                children: [RectangleHitbox()],
-              ),
-              RectangleComponent(
-                position: Vector2.all(500),
-                size: Vector2(100, 200),
-                paint: boxPaint,
-                children: [RectangleHitbox()],
-              ),
-              CircleComponent(
-                position: Vector2(650, 275),
-                radius: 50,
-                paint: boxPaint,
-                anchor: Anchor.center,
-                children: [CircleHitbox()],
-              ),
-              RectangleComponent(
-                position: Vector2(550, 200),
-                size: Vector2(200, 150),
-                paint: boxPaint,
-                children: [RectangleHitbox()],
-              ),
-              RectangleComponent(
-                position: Vector2(350, 30),
-                size: Vector2(200, 150),
-                paint: boxPaint,
-                angle: tau / 10,
-                children: [RectangleHitbox()],
-              ),
-            ],
-          ),
+        extraChildren..addAll(
+          [
+            CircleComponent(
+              position: Vector2(100, 100),
+              radius: 50,
+              paint: boxPaint,
+              children: [CircleHitbox()],
+            ),
+            CircleComponent(
+              position: Vector2(150, 500),
+              radius: 50,
+              paint: boxPaint,
+              anchor: Anchor.center,
+              children: [CircleHitbox()],
+            ),
+            CircleComponent(
+              position: Vector2(150, 500),
+              radius: 150,
+              paint: boxPaint,
+              anchor: Anchor.center,
+              children: [CircleHitbox()],
+            ),
+            RectangleComponent(
+              position: Vector2.all(300),
+              size: Vector2.all(100),
+              paint: boxPaint,
+              children: [RectangleHitbox()],
+            ),
+            RectangleComponent(
+              position: Vector2.all(500),
+              size: Vector2(100, 200),
+              paint: boxPaint,
+              children: [RectangleHitbox()],
+            ),
+            CircleComponent(
+              position: Vector2(650, 275),
+              radius: 50,
+              paint: boxPaint,
+              anchor: Anchor.center,
+              children: [CircleHitbox()],
+            ),
+            RectangleComponent(
+              position: Vector2(550, 200),
+              size: Vector2(200, 150),
+              paint: boxPaint,
+              children: [RectangleHitbox()],
+            ),
+            RectangleComponent(
+              position: Vector2(350, 30),
+              size: Vector2(200, 150),
+              paint: boxPaint,
+              angle: tau / 10,
+              children: [RectangleHitbox()],
+            ),
+          ],
+        ),
       );
     } else {
       removeAll(extraChildren);
@@ -135,6 +131,7 @@ bounce on will appear.
   }
 
   final Ray2 _ray = Ray2.zero();
+  final _rayDirection = Vector2(1, 1)..normalize();
   var _timePassed = 0.0;
 
   @override
@@ -146,9 +143,7 @@ bounce on will appear.
     rayPaint.color = _colorTween.transform(0.5 + (sin(_timePassed) / 2))!;
     if (origin != null) {
       _ray.origin.setFrom(origin!);
-      _ray.direction
-        ..setValues(1, 1)
-        ..normalize();
+      _ray.direction = _rayDirection;
       collisionDetection
           .raytrace(
             _ray,

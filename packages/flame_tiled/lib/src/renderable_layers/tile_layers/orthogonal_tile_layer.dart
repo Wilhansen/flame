@@ -1,7 +1,7 @@
 import 'package:flame/extensions.dart';
+import 'package:flame/rendering.dart';
 import 'package:flame_tiled/flame_tiled.dart';
 import 'package:flame_tiled/src/mutable_rect.dart';
-import 'package:flame_tiled/src/mutable_transform.dart';
 import 'package:flame_tiled/src/renderable_layers/tile_layers/tile_layer.dart';
 import 'package:meta/meta.dart';
 
@@ -62,7 +62,14 @@ class OrthogonalTileLayer extends FlameTileLayer {
 
         final flips = SimpleFlips.fromFlips(tileGid.flips);
         final scale = size.x / map.tileWidth;
-        final anchorX = src.width - halfMapTile.x;
+        // Anchor at the bottom-left of the map cell (Tiled's convention for
+        // oversized tiles from image collections), not the bottom-right.
+        // For uniform tiles where the image size equals the map tile size,
+        // halfMapTile.x == src.width - halfMapTile.x, so behavior is
+        // unchanged. For oversized tiles (e.g. trees, decorative props),
+        // this makes the image extend up and to the right from the cell,
+        // matching how Tiled renders the same tile in its editor.
+        final anchorX = halfMapTile.x;
         final anchorY = src.height - halfMapTile.y;
 
         late double offsetX;

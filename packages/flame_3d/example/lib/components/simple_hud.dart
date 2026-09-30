@@ -1,9 +1,9 @@
 import 'dart:ui';
 
-import 'package:example/example_game_3d.dart';
 import 'package:flame/components.dart';
 import 'package:flame/text.dart';
 import 'package:flame_3d/camera.dart';
+import 'package:flame_3d_example/example_game_3d.dart';
 
 const _width = 1.2;
 const _color = Color(0xFFFFFFFF);
@@ -62,7 +62,7 @@ Camera controls:
       '''
 FPS: $fps
 Projection: ${game.camera.projection.name}
-Culled: ${game.world.culled}
+Draw: ${game.world.context.drawCount}
 
 Position: ${position.x.toStringAsFixed(2)}, ${position.y.toStringAsFixed(2)}, ${position.z.toStringAsFixed(2)}
 Target: ${target.x.toStringAsFixed(2)}, ${target.y.toStringAsFixed(2)}, ${target.z.toStringAsFixed(2)}

@@ -1,9 +1,11 @@
 import 'package:dashbook/dashbook.dart';
 import 'package:examples/commons/commons.dart';
 import 'package:examples/stories/effects/color_effect_example.dart';
+import 'package:examples/stories/effects/combined_effect_example.dart';
 import 'package:examples/stories/effects/dual_effect_removal_example.dart';
 import 'package:examples/stories/effects/effect_controllers_example.dart';
 import 'package:examples/stories/effects/function_effect_example.dart';
+import 'package:examples/stories/effects/hue_effect_example.dart';
 import 'package:examples/stories/effects/move_effect_example.dart';
 import 'package:examples/stories/effects/opacity_effect_example.dart';
 import 'package:examples/stories/effects/remove_effect_example.dart';
@@ -59,6 +61,12 @@ void addEffectsStories(Dashbook dashbook) {
       info: OpacityEffectExample.description,
     )
     ..add(
+      'Hue Effect',
+      (_) => GameWidget(game: HueEffectExample()),
+      codeLink: baseLink('effects/hue_effect_example.dart'),
+      info: HueEffectExample.description,
+    )
+    ..add(
       'Color Effect',
       (_) => GameWidget(game: ColorEffectExample()),
       codeLink: baseLink('effects/color_effect_example.dart'),
@@ -69,6 +77,12 @@ void addEffectsStories(Dashbook dashbook) {
       (_) => GameWidget(game: SequenceEffectExample()),
       codeLink: baseLink('effects/sequence_effect_example.dart'),
       info: SequenceEffectExample.description,
+    )
+    ..add(
+      'Combined Effect',
+      (_) => GameWidget(game: CombinedEffectExample()),
+      codeLink: baseLink('effects/combined_effect_example.dart'),
+      info: CombinedEffectExample.description,
     )
     ..add(
       'Remove Effect',

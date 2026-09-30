@@ -54,16 +54,16 @@ class TiledComponent<T extends FlameGame> extends PositionComponent
     super.priority,
     super.key,
   }) : super(
-          size: computeSize(
-            tileMap.map.orientation,
-            tileMap.destTileSize,
-            tileMap.map.tileWidth,
-            tileMap.map.tileHeight,
-            tileMap.map.width,
-            tileMap.map.height,
-            tileMap.map.staggerAxis,
-          ),
-        );
+         size: computeSize(
+           tileMap.map.orientation,
+           tileMap.destTileSize,
+           tileMap.map.tileWidth,
+           tileMap.map.tileHeight,
+           tileMap.map.width,
+           tileMap.map.height,
+           tileMap.map.staggerAxis,
+         ),
+       );
 
   @override
   Future<void>? onLoad() async {
@@ -120,6 +120,7 @@ class TiledComponent<T extends FlameGame> extends PositionComponent
     double atlasPackingSpacingX = 0,
     double atlasPackingSpacingY = 0,
     ComponentKey? key,
+    String? package,
   }) async {
     return TiledComponent(
       await RenderableTiledMap.fromFile(
@@ -136,6 +137,7 @@ class TiledComponent<T extends FlameGame> extends PositionComponent
         layerPaintFactory: layerPaintFactory,
         atlasPackingSpacingX: atlasPackingSpacingX,
         atlasPackingSpacingY: atlasPackingSpacingY,
+        package: package,
       ),
       priority: priority,
       key: key,

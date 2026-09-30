@@ -8,12 +8,15 @@ import 'package:flutter/material.dart';
 ///
 /// If the [HasCollisionDetection] mixin is added to the game, [run] is called
 /// every tick to check for collisions.
-abstract class CollisionDetection<T extends Hitbox<T>,
-    B extends Broadphase<T>> {
+abstract class CollisionDetection<
+  T extends Hitbox<T>,
+  B extends Broadphase<T>
+> {
   final B broadphase;
 
   List<T> get items => broadphase.items;
-  final _lastPotentials = <CollisionProspect<T>>[];
+  final _lastProspectPool = ProspectPool<T>();
+  final _currentPotentials = <CollisionProspect<T>>{};
   final collisionsCompletedNotifier = CollisionDetectionCompletionNotifier();
 
   CollisionDetection({required this.broadphase});
@@ -34,9 +37,10 @@ abstract class CollisionDetection<T extends Hitbox<T>,
   void run() {
     broadphase.update();
     final potentials = broadphase.query();
-    final hashes = Set.unmodifiable(potentials.map((p) => p.hash));
+    _currentPotentials.clear();
 
     for (final potential in potentials) {
+      _currentPotentials.add(potential);
       final itemA = potential.a;
       final itemB = potential.b;
 
@@ -57,8 +61,8 @@ abstract class CollisionDetection<T extends Hitbox<T>,
 
     // Handles callbacks for an ended collision that the broadphase didn't
     // report as a potential collision anymore.
-    for (final prospect in _lastPotentials) {
-      if (!hashes.contains(prospect.hash) &&
+    for (final prospect in _lastProspectPool) {
+      if (!_currentPotentials.contains(prospect) &&
           prospect.a.collidingWith(prospect.b)) {
         handleCollisionEnd(prospect.a, prospect.b);
       }
@@ -69,20 +73,9 @@ abstract class CollisionDetection<T extends Hitbox<T>,
     collisionsCompletedNotifier.notifyListeners();
   }
 
-  final _lastPotentialsPool = <CollisionProspect<T>>[];
   void _updateLastPotentials(Iterable<CollisionProspect<T>> potentials) {
-    _lastPotentials.clear();
-    for (final potential in potentials) {
-      final CollisionProspect<T> lastPotential;
-      if (_lastPotentialsPool.length > _lastPotentials.length) {
-        lastPotential = _lastPotentialsPool[_lastPotentials.length]
-          ..setFrom(potential);
-      } else {
-        lastPotential = potential.clone();
-        _lastPotentialsPool.add(lastPotential);
-      }
-      _lastPotentials.add(lastPotential);
-    }
+    _lastProspectPool.reset();
+    _lastProspectPool.acquireAll(potentials);
   }
 
   /// Check what the intersection points of two items are,

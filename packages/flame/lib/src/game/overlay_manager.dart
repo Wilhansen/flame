@@ -89,8 +89,9 @@ class OverlayManager {
   /// Hides multiple overlays specified in [overlayNames].
   void removeAll(Iterable<String> overlayNames) {
     final initialCount = _activeOverlays.length;
-    _activeOverlays
-        .removeWhere((overlay) => overlayNames.contains(overlay.name));
+    _activeOverlays.removeWhere(
+      (overlay) => overlayNames.contains(overlay.name),
+    );
     if (_activeOverlays.length != initialCount) {
       _game.refreshWidget(isInternalRefresh: false);
     }
@@ -107,6 +108,24 @@ class OverlayManager {
       return remove(overlayName);
     } else {
       return add(overlayName, priority: priority);
+    }
+  }
+
+  /// Set active state of [overlayName] to [active]. If [isActive] != [active]
+  /// this method adds or removes the overlay so the active state of the overlay
+  /// becomes [active].
+  ///
+  /// [priority] is used to sort widgets for [buildCurrentOverlayWidgets]
+  /// The smaller the priority, the sooner your component will be build
+  /// (see [add] for more details).
+  bool setActive(String overlayName, {required bool active, int priority = 0}) {
+    if (active == isActive(overlayName)) {
+      return false;
+    }
+    if (active) {
+      return add(overlayName, priority: priority);
+    } else {
+      return remove(overlayName);
     }
   }
 
@@ -131,10 +150,11 @@ class OverlayManager {
   }
 }
 
-typedef OverlayBuilderFunction = Widget Function(
-  BuildContext context,
-  Game game,
-);
+typedef OverlayBuilderFunction =
+    Widget Function(
+      BuildContext context,
+      Game game,
+    );
 
 @immutable
 class _OverlayData {

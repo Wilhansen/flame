@@ -1,51 +1,37 @@
 # Supported Platforms
 
-Since Flame runs on top of Flutter, so its supported platforms depend on which platforms that are
+One of Flame's biggest advantages is that it inherits Flutter's cross-platform reach. A single
+codebase can produce games for phones, desktops, and the web. This section covers platform
+support details and shows how to deploy your finished game to popular hosting services.
+
+Since Flame runs on top of Flutter, its supported platforms depend on which platforms are
 supported by Flutter.
 
-At the moment, Flame supports web, mobile(Android and iOS) and desktop (Windows, MacOS and Linux).
+At the moment, Flame supports web, mobile (Android and iOS) and desktop (Windows, macOS and Linux).
 
 
 ## Flutter channels
 
-Flame keeps it support on the stable channel. The dev, beta and master channel should work, but we
-don't support them. This means that issues happening outside the stable channel are not a priority.
-
-
-## Flame web
-
-To use Flame on web you need to make sure your game is using the CanvasKit/[Skia](https://skia.org/)
-renderer. This will increase performance on the web, as it will use the `canvas` element instead of
-separate DOM elements.
-
-To run your game using skia, use the following command:
-
-```shell
-flutter run -d chrome --web-renderer canvaskit
-```
-
-To build the game for production, using skia, use the following:
-
-```shell
-flutter build web --release --web-renderer canvaskit
-```
+Flame keeps its support on the stable channel. The dev, beta and master channels should work,
+but we don't support them. This means that issues happening outside the stable channel are not
+a priority.
 
 
 ## Deploy your game to GitHub Pages
 
-One easy way to deploy your game online, is to use [GitHub Pages](https://pages.github.com/).
+One easy way to deploy your game online is to use [GitHub Pages](https://pages.github.com/).
 It is a cool feature from GitHub, by which you can easily host web content from your repository.
 
 Here we will explain the easiest way to get your game hosted using GitHub pages.
 
-First thing, lets create the branch where your deployed files will live:
+First, let's create the branch where your deployed files will live:
 
 ```shell
 git checkout -b gh-pages
 ```
 
-This branch can be created from `main` or any other place, it doesn't matter much. After you push that
-branch go back to your `main` branch.
+This branch can be created from `main` or any other place, it doesn't matter much. After you push
+that branch go back to your `main` branch.
 
 Now you should add the [flutter-gh-pages](https://github.com/bluefireteam/flutter-gh-pages)
 action to your repository, you can do that by creating a file `gh-pages.yaml` under the folder
@@ -76,7 +62,7 @@ Be sure to change `NAME_OF_YOUR_REPOSITORY` to the name of your GitHub repositor
 Now, whenever you push something to the `main` branch, the action will run and update your
 deployed game.
 
-The game should be available at an URL like this:
+The game should be available at a URL like this:
 `https://YOUR_GITHUB_USERNAME.github.io/NAME_OF_YOUR_REPOSITORY/`
 
 
@@ -96,15 +82,79 @@ Further instructions can be found on
 [itch.io](https://itch.io/docs/creators/html5#getting-started/zip-file).
 
 
+## Deploy your game to Cloudflare Pages
+
+```{note}
+Automated deployment to Cloudflare Pages is only available for GitHub and GitLab
+repositories.
+```
+
+[Cloudflare pages](https://pages.cloudflare.com/) is another interesting option to host your
+Flame game online.
+
+Setting up an automated deployment on it is super simple and can be achieved in a few steps:
+
+First, create your account on Cloudflare, and once you are logged in, use the `+ Add` button on
+the top right corner to create your page project.
+
+![Cloudflare add menu screenshot](../images/add_button.png)
+
+Next follow the steps to connect your repository, you can choose between GitHub and GitLab.
+
+You should then be presented with a screen to configure your project name, which should be
+pre-filled with the name of your repository, and the production branch, which will also
+be pre-filled with `main`.
+
+Scrolling down you will see the build settings panel, which should look like this:
+
+![Cloudflare build settings screenshot](../images/build_form.png)
+
+Leave the `Framework preset` as `None` since Flutter is not supported out of the box.
+
+Then on the `Build command` field, enter the following command:
+
+```shell
+if cd flutter; then git pull && cd ..;else
+git clone https://github.com/flutter/flutter.git; fi &&
+../flutter/bin/flutter doctor && ../flutter/bin/flutter clean &&
+../flutter/bin/flutter build web --release
+```
+
+It should be entered as a single line, but below you can see it split into multiple lines for
+better readability:
+
+```shell
+if cd flutter; then
+  git pull && cd ..
+else
+  git clone https://github.com/flutter/flutter.git
+fi
+../flutter/bin/flutter doctor
+../flutter/bin/flutter clean
+../flutter/bin/flutter build web --release
+```
+
+Some people might prefer to create a bash script in the root of their repository with the above
+commands and use it instead of entering the commands directly in the field, so it is up to you.
+
+Set the Build output directory to `build/web`.
+
+If needed use the advanced options to set environment variables.
+
+Finally, click on the `Save and Deploy` button to start the deployment and that is it. You should
+have automation ready to deploy your game to Cloudflare Pages every time you push to your
+repository.
+
+
 ### Web support
 
 When using Flame on the web some methods may not work. For example `Flame.device.setOrientation` and
 `Flame.device.fullScreen` won't work on web, they can be called, but nothing will happen.
 
-Another example: pre caching audio using `flame_audio` package also doesn't work due to Audioplayers
-not supporting it on web. This can be worked around by using the `http` package, and requesting a
-get to the audio file, that will make the browser cache the file producing the same effect as on
-mobile.
+Another example: pre-caching audio using the `flame_audio` package also doesn't work due to
+Audioplayers not supporting it on web. This can be worked around by using the `http` package,
+and requesting a get to the audio file, that will make the browser cache the file producing the
+same effect as on mobile.
 
 If you want to create instances of `ui.Image` on the web you can use our
 `Flame.images.decodeImageFromPixels` method. This wraps the `decodeImageFromPixels` from the `ui`

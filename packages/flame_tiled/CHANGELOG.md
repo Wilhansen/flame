@@ -1,3 +1,46 @@
+## 3.1.2
+
+ - **FIX**(flame_tiled): Anchor oversized orthogonal tiles at bottom-left of cell ([#3923](https://github.com/flame-engine/flame/issues/3923)). ([4c775db0](https://github.com/flame-engine/flame/commit/4c775db08ffc4357420131251510bdbf71585948))
+
+## 3.1.1
+
+ - Update a dependency to the latest release.
+
+## 3.1.0
+
+ - **FIX**: Use resolved path when loading single-image tilesets ([#3826](https://github.com/flame-engine/flame/issues/3826)). ([bbdff923](https://github.com/flame-engine/flame/commit/bbdff9230f96ab18ee83a1a0ffab5b4d7f4a43bf))
+ - **FIX**: Bump Flutter min version to 3.41.0 ([#3807](https://github.com/flame-engine/flame/issues/3807)). ([0d505304](https://github.com/flame-engine/flame/commit/0d50530485e5be9ce1c9138a5b437607c7c5c628))
+ - **FEAT**: Add dynamic layer opacity support to flame_tiled ([#3843](https://github.com/flame-engine/flame/issues/3843)). ([b1702997](https://github.com/flame-engine/flame/commit/b17029977b3c5890fe6794942a0553eb3f21ff8d))
+ - **FEAT**: Support package argument in asset loading methods and widgets ([#3835](https://github.com/flame-engine/flame/issues/3835)). ([3f6f95b0](https://github.com/flame-engine/flame/commit/3f6f95b0225df9e4035c74de6cfad501e8c45167))
+
+## 3.0.11
+
+ - Update a dependency to the latest release.
+
+## 3.0.10
+
+ - **FIX**: Image layer paint area fix ([#3783](https://github.com/flame-engine/flame/issues/3783)). ([437d4bec](https://github.com/flame-engine/flame/commit/437d4becb5752e8429f67297b08ceeb2b971388c))
+
+## 3.0.9
+
+ - Update a dependency to the latest release.
+
+## 3.0.8
+
+ - **FIX**: Show assertion when tiled file is loaded in the wrong way ([#3747](https://github.com/flame-engine/flame/issues/3747)). ([3efedc46](https://github.com/flame-engine/flame/commit/3efedc4653fa33cb239a38cc6ac8c999bcd25a7f))
+
+## 3.0.7
+
+ - **REFACTOR**: Move MutableRSTransform out of flame_tiled package and into flame package ([#3695](https://github.com/flame-engine/flame/issues/3695)). ([7d644dd8](https://github.com/flame-engine/flame/commit/7d644dd84ce27e292b53f7310967393cf4c60618))
+
+## 3.0.6
+
+ - Update a dependency to the latest release.
+
+## 3.0.5
+
+ - Update a dependency to the latest release.
+
 ## 3.0.4
 
  - **FIX**: Add optional key parameter to TiledComponent.load method ([#3630](https://github.com/flame-engine/flame/issues/3630)). ([5a27746e](https://github.com/flame-engine/flame/commit/5a27746ee4dbab17565472133274dd1308525978))

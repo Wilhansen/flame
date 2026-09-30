@@ -119,12 +119,14 @@ mixin _TapCounter on TapCallbacks {
 
   @override
   void onTapDown(TapDownEvent event) {
+    expect(event.raw, isNotNull);
     event.continuePropagation = true;
     tapDownEvent++;
   }
 
   @override
   void onTapUp(TapUpEvent event) {
+    expect(event.raw, isNotNull);
     event.continuePropagation = true;
     tapUpEvent++;
   }
@@ -139,5 +141,5 @@ mixin _TapCounter on TapCallbacks {
 class _IgnoreTapCallbacksComponent extends PositionComponent
     with TapCallbacks, _TapCounter, IgnoreEvents {
   _IgnoreTapCallbacksComponent({super.position, super.children})
-      : super(size: Vector2.all(10));
+    : super(size: Vector2.all(10));
 }

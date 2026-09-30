@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flame/components.dart';
+import 'package:flame/effects.dart';
 import 'package:flame/game.dart';
 import 'package:flame/palette.dart';
 import 'package:flame/text.dart';
@@ -29,12 +30,12 @@ class TextExample extends FlameGame {
           ..anchor = Anchor.bottomRight
           ..position.setFrom(size),
         MyTextBox(
-          '"This is our world now. The world of the electron and the switch; '
-          'the beauty of the baud. We exist without nationality, skin color, '
-          'or religious bias. You wage wars, murder, cheat, lie to us and try '
-          "to make us believe it's for our own good, yet we're the "
-          'criminals. Yes, I am a criminal. My crime is that of curiosity."',
-        )
+            '"This is our world now. The world of the electron and the switch; '
+            'the beauty of the baud. We exist without nationality, skin color, '
+            'or religious bias. You wage wars, murder, cheat, lie to us and '
+            "try to make us believe it's for our own good, yet we're the "
+            'criminals. Yes, I am a criminal. My crime is that of curiosity."',
+          )
           ..anchor = Anchor.bottomLeft
           ..y = size.y,
         MyTextBox(
@@ -82,6 +83,37 @@ class TextExample extends FlameGame {
             margins: EdgeInsets.fromLTRB(10, 10, 10, 10),
           ),
         ),
+        TextComponent(
+          text: 'I fade in and fade out',
+          anchor: Anchor.topRight,
+          position: Vector2(size.x - 50, 20),
+          children: [
+            SequenceEffect(
+              [
+                OpacityEffect.fadeOut(
+                  LinearEffectController(1.5),
+                ),
+                OpacityEffect.fadeIn(
+                  LinearEffectController(1.5),
+                ),
+              ],
+              infinite: true,
+            ),
+          ],
+        ),
+        TextComponent(
+          text: 'I change my color!',
+          anchor: Anchor.topRight,
+          position: Vector2(size.x - 50, 50),
+          children: [
+            ColorEffect(
+              Colors.blue,
+              InfiniteEffectController(
+                LinearEffectController(1.5),
+              ),
+            ),
+          ],
+        ),
       ],
     );
   }
@@ -114,7 +146,7 @@ final _shaded = TextPaint(
 );
 
 class MyTextBox extends TextBoxComponent {
-  late Paint paint;
+  late Paint bgPaint;
   late Rect bgRect;
 
   MyTextBox(
@@ -124,37 +156,37 @@ class MyTextBox extends TextBoxComponent {
     double? timePerChar,
     double? margins,
   }) : super(
-          text: text,
-          textRenderer: _box,
-          boxConfig: TextBoxConfig(
-            maxWidth: 400,
-            timePerChar: timePerChar ?? 0.05,
-            growingBox: true,
-            margins: EdgeInsets.all(margins ?? 25),
-          ),
-        );
+         text: text,
+         textRenderer: _box,
+         boxConfig: TextBoxConfig(
+           maxWidth: 400,
+           timePerChar: timePerChar ?? 0.05,
+           growingBox: true,
+           margins: EdgeInsets.all(margins ?? 25),
+         ),
+       );
 
   @override
   Future<void> onLoad() {
-    paint = Paint();
+    bgPaint = Paint();
     bgRect = Rect.fromLTWH(0, 0, width, height);
     size.addListener(() {
       bgRect = Rect.fromLTWH(0, 0, width, height);
     });
 
-    paint.color = Colors.white10;
+    bgPaint.color = Colors.white10;
     return super.onLoad();
   }
 
   @override
   void render(Canvas canvas) {
-    canvas.drawRect(bgRect, paint);
+    canvas.drawRect(bgRect, bgPaint);
     super.render(canvas);
   }
 }
 
 class MyScrollTextBox extends ScrollTextBoxComponent {
-  late Paint paint;
+  late Paint bgPaint;
   late Rect backgroundRect;
 
   MyScrollTextBox(
@@ -167,16 +199,16 @@ class MyScrollTextBox extends ScrollTextBoxComponent {
 
   @override
   FutureOr<void> onLoad() {
-    paint = Paint();
+    bgPaint = Paint();
     backgroundRect = Rect.fromLTWH(0, 0, width, height);
 
-    paint.color = Colors.white10;
+    bgPaint.color = Colors.white10;
     return super.onLoad();
   }
 
   @override
   void render(Canvas canvas) {
-    canvas.drawRect(backgroundRect, paint);
+    canvas.drawRect(backgroundRect, bgPaint);
     super.render(canvas);
   }
 }

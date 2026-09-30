@@ -1,11 +1,11 @@
+import 'dart:typed_data';
 import 'dart:ui';
 
-import 'package:flame_3d/camera.dart';
 import 'package:flame_3d/components.dart';
 import 'package:flame_3d/game.dart';
 import 'package:flame_3d/resources.dart';
 
-/// A [Component3D] that represents a light source in the 3D world.
+/// A [Component3D] that represents a light source in 3D space.
 class LightComponent extends Component3D {
   LightComponent({
     required this.source,
@@ -17,27 +17,30 @@ class LightComponent extends Component3D {
     Color color = const Color(0xFFFFFFFF),
     double intensity = 1.0,
   }) : this(
-          source: PointLight(
-            color: color,
-            intensity: intensity,
-          ),
-          position: position,
-        );
+         source: PointLight(
+           color: color,
+           intensity: intensity,
+         ),
+         position: position,
+       );
 
   LightComponent.ambient({
     Color color = const Color(0xFFFFFFFF),
     double intensity = 0.2,
   }) : this(
-          source: AmbientLight(
-            color: color,
-            intensity: intensity,
-          ),
-        );
+         source: AmbientLight(
+           color: color,
+           intensity: intensity,
+         ),
+       );
 
   final LightSource source;
 
   late final Light _light = Light(
-    transform: transform,
+    position: Vector3.fromBuffer(
+      worldTransformMatrix.storage.buffer,
+      12 * Float32List.bytesPerElement,
+    ),
     source: source,
   );
 
@@ -45,9 +48,21 @@ class LightComponent extends Component3D {
 
   @override
   void onMount() {
-    assert(
-      parent is World3D,
-      'Lights must be added to the root of the World3D',
-    );
+    super.onMount();
+    world.addLight(_light);
+  }
+
+  @override
+  void onRemove() {
+    world.removeLight(_light);
+    super.onRemove();
+  }
+
+  @override
+  void update(double dt) {
+    // NOTE: this ensures the matrix gets computed if need be, so that
+    // the light position moves with it's ancestors.
+    worldTransformMatrix;
+    super.update(dt);
   }
 }

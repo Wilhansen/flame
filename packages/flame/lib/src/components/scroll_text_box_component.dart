@@ -43,32 +43,32 @@ class ScrollTextBoxComponent<T extends TextRenderer> extends PositionComponent {
     super.key,
     List<Component>? children,
     void Function()? onComplete,
-  })  : assert(
-          size.x > 0 && size.y > 0,
-          'size must have positive dimensions: $size',
-        ),
-        super(size: size) {
+  }) : assert(
+         size.x > 0 && size.y > 0,
+         'size must have positive dimensions: $size',
+       ),
+       super(size: size) {
     final marginTop = boxConfig?.margins.top ?? 0;
     final marginBottom = boxConfig?.margins.bottom ?? 0;
     final innerMargins = EdgeInsets.fromLTRB(0, marginTop, 0, marginBottom);
 
-    boxConfig ??= const TextBoxConfig();
-    boxConfig = TextBoxConfig(
-      timePerChar: boxConfig.timePerChar,
-      dismissDelay: boxConfig.dismissDelay,
-      growingBox: boxConfig.growingBox,
+    var resolvedBoxConfig = boxConfig ?? const TextBoxConfig();
+    resolvedBoxConfig = TextBoxConfig(
+      timePerChar: resolvedBoxConfig.timePerChar,
+      dismissDelay: resolvedBoxConfig.dismissDelay,
+      growingBox: resolvedBoxConfig.growingBox,
       maxWidth: size.x,
       margins: EdgeInsets.fromLTRB(
-        boxConfig.margins.left,
+        resolvedBoxConfig.margins.left,
         0,
-        boxConfig.margins.right,
+        resolvedBoxConfig.margins.right,
         0,
       ),
     );
     _scrollTextBoxComponent = _ScrollTextBoxComponent<T>(
       text: text,
       textRenderer: textRenderer,
-      boxConfig: boxConfig,
+      boxConfig: resolvedBoxConfig,
       align: align,
       pixelRatio: pixelRatio,
       onComplete: onComplete,
@@ -125,10 +125,10 @@ class _ScrollTextBoxComponent<T extends TextRenderer> extends TextBoxComponent
     double super.angle = 0.0,
     super.onComplete,
   }) : super(
-          text: text ?? '',
-          textRenderer: textRenderer ?? TextPaint(),
-          boxConfig: boxConfig ?? const TextBoxConfig(),
-        );
+         text: text ?? '',
+         textRenderer: textRenderer ?? TextPaint(),
+         boxConfig: boxConfig ?? const TextBoxConfig(),
+       );
 
   @override
   Future<void> onLoad() {

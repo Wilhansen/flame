@@ -1,14 +1,15 @@
 import 'package:flame/components.dart';
-import 'package:flame/src/events/messages/location_context_event.dart';
-import 'package:flame/src/game/game.dart';
+import 'package:flame/events.dart';
+import 'package:flame/game.dart';
 
 /// Base class for events that originate at some point on the screen. These
 /// include: tap events, scale events, etc.
 ///
 /// This class includes properties that describe the position where the event
 /// has occurred.
-abstract class PositionEvent extends LocationContextEvent<Vector2> {
-  PositionEvent(this._game, {required this.devicePosition});
+abstract class PositionEvent<R> extends LocationContextEvent<Vector2, R> {
+  PositionEvent(this._game, {required this.devicePosition, required super.raw});
+
   final Game _game;
 
   /// Event position in the coordinate space of the device -- either the phone,
@@ -23,8 +24,9 @@ abstract class PositionEvent extends LocationContextEvent<Vector2> {
   /// to the game canvas.
   ///
   /// This could be considered the Flame-level global position.
-  late final Vector2 canvasPosition =
-      _game.convertGlobalToLocalCoordinate(devicePosition);
+  late final Vector2 canvasPosition = _game.convertGlobalToLocalCoordinate(
+    devicePosition,
+  );
 
   /// Event position in the local coordinate space of the current component.
   ///

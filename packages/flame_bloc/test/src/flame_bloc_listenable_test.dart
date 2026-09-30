@@ -49,6 +49,17 @@ class _SadPlayerListener extends Component
   }
 }
 
+class _BlocAccessingListener extends Component
+    with FlameBlocListenable<PlayerCubit, PlayerState> {
+  PlayerCubit? initialBloc;
+
+  @override
+  void onInitialState(PlayerState state) {
+    super.onInitialState(state);
+    initialBloc = bloc;
+  }
+}
+
 void main() {
   group('FlameBlocListenable', () {
     testWithFlameGame(
@@ -57,8 +68,8 @@ void main() {
         final bloc = InventoryCubit();
         final provider =
             FlameBlocProvider<InventoryCubit, InventoryState>.value(
-          value: bloc,
-        );
+              value: bloc,
+            );
         await game.ensureAdd(provider);
 
         final component = _PlayerListener();
@@ -131,76 +142,93 @@ void main() {
     );
 
     testWithFlameGame(
-        'successfully revisit previously visited route with bloc listener',
-        (game) async {
-      var playerPushCalled = 0;
-      var playerPopCalled = 0;
-      var sadPushCalled = 0;
-      var sadPopCalled = 0;
-      final router = RouterComponent(
-        routes: {
-          'start': Route(Component.new),
-          'playerRoute': _CustomBlocRoute(
-            onPush: (self, prevRoute) {
-              playerPushCalled++;
-            },
-            onPop: (self, prevRoute) {
-              playerPopCalled++;
-            },
-            build: (self) => _PlayerListener(),
-          ),
-          'sadRoute': _CustomBlocRoute(
-            onPush: (self, prevRoute) {
-              sadPushCalled++;
-            },
-            onPop: (self, prevRoute) {
-              sadPopCalled++;
-            },
-            build: (self) => _SadPlayerListener(),
-          ),
-        },
-        initialRoute: 'start',
-      );
+      'can access bloc in onInitialState',
+      (game) async {
+        final bloc = PlayerCubit();
+        final provider = FlameBlocProvider<PlayerCubit, PlayerState>.value(
+          value: bloc,
+        );
+        await game.ensureAdd(provider);
 
-      final bloc = PlayerCubit();
-      final provider = FlameBlocProvider<PlayerCubit, PlayerState>.value(
-        value: bloc,
-        children: [router],
-      );
+        final component = _BlocAccessingListener();
+        await provider.ensureAdd(component);
 
-      await game.ensureAdd(provider);
+        expect(component.initialBloc, bloc);
+      },
+    );
 
-      //Visit routes first time
-      router.pushNamed('playerRoute');
-      await game.ready();
-      expect(router.currentRoute.name, 'playerRoute');
-      expect(playerPushCalled, 1);
-      router.pop();
-      await game.ready();
-      expect(playerPushCalled, 1);
-      expect(playerPopCalled, 1);
-      router.pushNamed('sadRoute');
-      await game.ready();
-      expect(sadPushCalled, 1);
-      expect(router.currentRoute.name, 'sadRoute');
-      router.pop();
+    testWithFlameGame(
+      'successfully revisit previously visited route with bloc listener',
+      (game) async {
+        var playerPushCalled = 0;
+        var playerPopCalled = 0;
+        var sadPushCalled = 0;
+        var sadPopCalled = 0;
+        final router = RouterComponent(
+          routes: {
+            'start': Route(Component.new),
+            'playerRoute': _CustomBlocRoute(
+              onPush: (self, prevRoute) {
+                playerPushCalled++;
+              },
+              onPop: (self, prevRoute) {
+                playerPopCalled++;
+              },
+              build: (self) => _PlayerListener(),
+            ),
+            'sadRoute': _CustomBlocRoute(
+              onPush: (self, prevRoute) {
+                sadPushCalled++;
+              },
+              onPop: (self, prevRoute) {
+                sadPopCalled++;
+              },
+              build: (self) => _SadPlayerListener(),
+            ),
+          },
+          initialRoute: 'start',
+        );
 
-      //Revisit playerRoute
-      await game.ready();
-      expect(sadPushCalled, 1);
-      expect(sadPopCalled, 1);
-      router.pushNamed('playerRoute');
+        final bloc = PlayerCubit();
+        final provider = FlameBlocProvider<PlayerCubit, PlayerState>.value(
+          value: bloc,
+          children: [router],
+        );
 
-      await game.ready();
-      expect(playerPushCalled, 2);
-      router.pop();
+        await game.ensureAdd(provider);
 
-      //Revisit sadRoute
-      await game.ready();
-      router.pushNamed('sadRoute');
-      await game.ready();
-      expect(sadPushCalled, 2);
-    });
+        //Visit routes first time
+        router.pushNamed('playerRoute');
+        await game.ready();
+        expect(router.currentRoute.name, 'playerRoute');
+        expect(playerPushCalled, 1);
+        router.pop();
+        await game.ready();
+        expect(playerPushCalled, 1);
+        expect(playerPopCalled, 1);
+        router.pushNamed('sadRoute');
+        await game.ready();
+        expect(sadPushCalled, 1);
+        expect(router.currentRoute.name, 'sadRoute');
+        router.pop();
+
+        //Revisit playerRoute
+        await game.ready();
+        expect(sadPushCalled, 1);
+        expect(sadPopCalled, 1);
+        router.pushNamed('playerRoute');
+
+        await game.ready();
+        expect(playerPushCalled, 2);
+        router.pop();
+
+        //Revisit sadRoute
+        await game.ready();
+        router.pushNamed('sadRoute');
+        await game.ready();
+        expect(sadPushCalled, 2);
+      },
+    );
   });
 }
 
@@ -210,10 +238,10 @@ class _CustomBlocRoute extends Route {
     void Function(Route, Route?)? onPush,
     void Function(Route, Route)? onPop,
     Component Function(Route)? build,
-  })  : _onPush = onPush,
-        _onPop = onPop,
-        _build = build,
-        super(builder);
+  }) : _onPush = onPush,
+       _onPop = onPop,
+       _build = build,
+       super(builder);
 
   final void Function(Route, Route?)? _onPush;
   final void Function(Route, Route)? _onPop;

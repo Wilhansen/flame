@@ -1,14 +1,14 @@
 import 'package:flame/components.dart';
 import 'package:flame/effects.dart';
+import 'package:flame/events.dart';
 import 'package:flame/game.dart';
-import 'package:flame/input.dart';
 
 enum RobotState {
   idle,
   running,
 }
 
-class FunctionEffectExample extends FlameGame with TapDetector {
+class FunctionEffectExample extends FlameGame with TapCallbacks {
   static const String description = '''
 This example shows how to use the FunctionEffect to create custom effects.
 
@@ -38,15 +38,15 @@ The robot will switch between running and idle animations over the duration of
 
     final functionEffect =
         FunctionEffect<SpriteAnimationGroupComponent<RobotState>>(
-      (target, progress) {
-        if (progress > 0.7) {
-          target.current = RobotState.idle;
-        } else if (progress > 0.3) {
-          target.current = RobotState.running;
-        }
-      },
-      EffectController(duration: 10.0, infinite: true),
-    );
+          (target, progress) {
+            if (progress > 0.7) {
+              target.current = RobotState.idle;
+            } else if (progress > 0.3) {
+              target.current = RobotState.running;
+            }
+          },
+          EffectController(duration: 10.0, infinite: true),
+        );
     final component = SpriteAnimationGroupComponent<RobotState>(
       animations: {
         RobotState.running: running,

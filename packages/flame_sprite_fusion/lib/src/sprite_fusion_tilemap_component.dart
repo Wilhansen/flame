@@ -34,11 +34,11 @@ class SpriteFusionTilemapComponent extends PositionComponent {
     super.priority,
     super.key,
   }) : super(
-          size: Vector2(
-            tilemapData.mapWidth * tilemapData.tileSize,
-            tilemapData.mapHeight * tilemapData.tileSize,
-          ),
-        ) {
+         size: Vector2(
+           tilemapData.mapWidth * tilemapData.tileSize,
+           tilemapData.mapHeight * tilemapData.tileSize,
+         ),
+       ) {
     _spriteBatch = SpriteBatch(spriteSheet.image, useAtlas: useAtlas);
 
     for (final data in tilemapData.layers.reversed) {
@@ -83,16 +83,24 @@ class SpriteFusionTilemapComponent extends PositionComponent {
     Iterable<Component>? children,
     int? priority,
     ComponentKey? key,
+    String? package,
   }) async {
-    final content = await (assetBundle ?? Flame.bundle)
-        .loadString('$tilemapPrefix$mapJsonFile');
+    final prefix = package == null
+        ? tilemapPrefix
+        : 'packages/$package/$tilemapPrefix';
+    final content = await (assetBundle ?? Flame.bundle).loadString(
+      '$prefix$mapJsonFile',
+    );
 
     final json = jsonDecode(content) as Map<String, dynamic>;
 
     return SpriteFusionTilemapComponent(
       tilemapData: SpriteFusionTilemapData.fromMap(json),
       spriteSheet: SpriteSheet(
-        image: await (images ?? Flame.images).load(spriteSheetFile),
+        image: await (images ?? Flame.images).load(
+          spriteSheetFile,
+          package: package,
+        ),
         srcSize: Vector2.all(double.parse(json['tileSize'].toString())),
       ),
       useAtlas: useAtlas,

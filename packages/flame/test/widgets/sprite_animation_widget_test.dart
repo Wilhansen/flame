@@ -12,8 +12,9 @@ Future<void> main() async {
   final image = await generateImage();
 
   group('SpriteAnimationWidget', () {
-    testWidgets('has no FutureBuilder when passed an animation',
-        (tester) async {
+    testWidgets('has no FutureBuilder when passed an animation', (
+      tester,
+    ) async {
       final sprite1 = Sprite(image);
       final sprite2 = Sprite(image);
       final spriteAnimation = SpriteAnimation.spriteList(
@@ -55,8 +56,9 @@ Future<void> main() async {
         );
 
         final futureBuilderFinder = find.byType(FutureBuilder<SpriteAnimation>);
-        final spriteAnimationWidgetFinder =
-            find.byType(InternalSpriteAnimationWidget);
+        final spriteAnimationWidgetFinder = find.byType(
+          InternalSpriteAnimationWidget,
+        );
         final loadingWidgetFinder = find.byType(LoadingWidget);
 
         expect(futureBuilderFinder, findsOneWidget);
@@ -88,7 +90,7 @@ Future<void> main() async {
         animationTicker1.onStart = () => animation1Started = true;
         animationTicker2.onStart = () => animation2Started = true;
 
-        for (var idx = 0; idx < executionCount; idx++) {
+        for (var index = 0; index < executionCount; index++) {
           animation1Started = false;
           animation2Started = false;
 
@@ -524,6 +526,97 @@ Future<void> main() async {
             isTrue,
           );
         });
+      });
+    });
+
+    group('size parameter', () {
+      testWidgets('when null, does not wrap in SizedBox', (tester) async {
+        final sprite1 = Sprite(image);
+        final sprite2 = Sprite(image);
+        final spriteAnimation = SpriteAnimation.spriteList(
+          [sprite1, sprite2],
+          stepTime: 0.1,
+        );
+
+        await tester.pumpWidget(
+          SpriteAnimationWidget(
+            animation: spriteAnimation,
+            animationTicker: spriteAnimation.createTicker(),
+          ),
+        );
+
+        // Check that InternalSpriteAnimationWidget is not wrapped in a SizedBox
+        final internalWidgetFinder = find.byType(InternalSpriteAnimationWidget);
+        final sizedBoxAncestor = find.ancestor(
+          of: internalWidgetFinder,
+          matching: find.byType(SizedBox),
+        );
+        expect(sizedBoxAncestor, findsNothing);
+      });
+
+      testWidgets('when provided, wraps in SizedBox with correct size', (
+        tester,
+      ) async {
+        final sprite1 = Sprite(image);
+        final sprite2 = Sprite(image);
+        final spriteAnimation = SpriteAnimation.spriteList(
+          [sprite1, sprite2],
+          stepTime: 0.1,
+        );
+        const customSize = Size(100, 200);
+
+        await tester.pumpWidget(
+          SpriteAnimationWidget(
+            animation: spriteAnimation,
+            animationTicker: spriteAnimation.createTicker(),
+            size: customSize,
+          ),
+        );
+
+        // Find SizedBox that is an ancestor of InternalSpriteAnimationWidget
+        final internalWidgetFinder = find.byType(InternalSpriteAnimationWidget);
+        final sizedBoxFinder = find.ancestor(
+          of: internalWidgetFinder,
+          matching: find.byType(SizedBox),
+        );
+        expect(sizedBoxFinder, findsOneWidget);
+
+        final sizedBox = tester.widget<SizedBox>(sizedBoxFinder);
+        expect(sizedBox.width, customSize.width);
+        expect(sizedBox.height, customSize.height);
+      });
+
+      testWidgets('asset constructor respects size parameter', (tester) async {
+        const imagePath = 'test_path_size_animation';
+        Flame.images.add(imagePath, image);
+        const customSize = Size(150, 250);
+        final spriteAnimationData = SpriteAnimationData.sequenced(
+          amount: 2,
+          stepTime: 1,
+          textureSize: Vector2(10, 10),
+        );
+
+        await tester.pumpWidget(
+          SpriteAnimationWidget.asset(
+            path: imagePath,
+            data: spriteAnimationData,
+            size: customSize,
+          ),
+        );
+
+        await tester.pump();
+
+        // Find SizedBox that is an ancestor of InternalSpriteAnimationWidget
+        final internalWidgetFinder = find.byType(InternalSpriteAnimationWidget);
+        final sizedBoxFinder = find.ancestor(
+          of: internalWidgetFinder,
+          matching: find.byType(SizedBox),
+        );
+        expect(sizedBoxFinder, findsOneWidget);
+
+        final sizedBox = tester.widget<SizedBox>(sizedBoxFinder);
+        expect(sizedBox.width, customSize.width);
+        expect(sizedBox.height, customSize.height);
       });
     });
   });

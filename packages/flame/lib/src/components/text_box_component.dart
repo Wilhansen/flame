@@ -65,7 +65,21 @@ class TextBoxConfig {
 class TextBoxComponent<T extends TextRenderer> extends TextComponent {
   static final Paint _imagePaint = BasicPalette.white.paint()
     ..filterQuality = FilterQuality.medium;
-  TextBoxConfig boxConfig;
+  TextBoxConfig _boxConfig;
+
+  TextBoxConfig get boxConfig => _boxConfig;
+
+  set boxConfig(TextBoxConfig value) {
+    final oldConfig = _boxConfig;
+    _boxConfig = value;
+    if (oldConfig.maxWidth != value.maxWidth) {
+      // This call is necessary to reflow the text for any change in
+      // TextBoxConfig maxWidth.
+      updateBounds();
+    }
+    redraw();
+  }
+
   final double pixelRatio;
 
   @visibleForTesting
@@ -85,8 +99,9 @@ class TextBoxComponent<T extends TextRenderer> extends TextComponent {
 
   // Notifies when a new line is rendered with the position of the new line.
   @internal
-  final ValueNotifier<double> newLinePositionNotifier =
-      ValueNotifier<double>(0);
+  final ValueNotifier<double> newLinePositionNotifier = ValueNotifier<double>(
+    0,
+  );
 
   double _currentLinePosition = 0.0;
   bool _isOnCompleteExecuted = false;
@@ -111,11 +126,12 @@ class TextBoxComponent<T extends TextRenderer> extends TextComponent {
     super.priority,
     this.onComplete,
     super.key,
-  })  : boxConfig = boxConfig ?? const TextBoxConfig(),
-        _fixedSize = size != null,
-        align = align ?? Anchor.topLeft,
-        pixelRatio = pixelRatio ??
-            PlatformDispatcher.instance.views.first.devicePixelRatio;
+  }) : _boxConfig = boxConfig ?? const TextBoxConfig(),
+       _fixedSize = size != null,
+       align = align ?? Anchor.topLeft,
+       pixelRatio =
+           pixelRatio ??
+           PlatformDispatcher.instance.views.first.devicePixelRatio;
 
   /// Alignment of the text within its bounding box.
   ///
@@ -165,18 +181,92 @@ class TextBoxComponent<T extends TextRenderer> extends TextComponent {
   @internal
   void updateBounds() {
     lines.clear();
-    var lineHeight = 0.0;
     final maxBoxWidth = _fixedSize ? width : boxConfig.maxWidth;
+    final availableWidth = maxBoxWidth - boxConfig.margins.horizontal;
+
+    // Use Flutter's TextPainter for proper text layout when available.
+    // This correctly handles CJK languages and other scripts that don't
+    // use spaces for word boundaries.
+    if (textRenderer is TextPaint) {
+      _updateBoundsWithTextPainter(availableWidth);
+    } else {
+      // Fallback to the original space-based splitting for other renderers
+      _updateBoundsWordBased(availableWidth);
+    }
+
+    size = _recomputeSize();
+  }
+
+  void _updateBoundsWithTextPainter(double availableWidth) {
+    final textPaint = textRenderer as TextPaint;
+    final textPainter = textPaint.toTextPainter(text);
+    textPainter.layout(maxWidth: availableWidth);
+
+    // Extract lines from the laid out text using line boundaries
+    final lineMetricsList = textPainter.computeLineMetrics();
+    var lineHeight = 0.0;
+    var offset = 0;
+
+    while (offset < text.length) {
+      var range = textPainter.getLineBoundary(TextPosition(offset: offset));
+      // Flutter web sometimes report the range on the previous page instead of
+      // the following. This is probably a bug cause by the
+      // JS floating number inaccuracies.
+      //
+      // We have an issue tracking that down on Flutter itself:
+      // https://github.com/flutter/flutter/issues/188874
+      //
+      // This code is a workaround, that captures when such we fall
+      // in that issue and tries to get the next page.
+      if (range.start < offset) {
+        range = textPainter.getLineBoundary(
+          TextPosition(
+            offset: offset + 1,
+          ),
+        );
+      }
+      var lineText = text.substring(range.start, range.end);
+
+      // Don't include the trailing newline character in the line text
+      if (lineText.endsWith('\n')) {
+        lineText = lineText.substring(0, lineText.length - 1);
+      }
+
+      lines.add(lineText);
+
+      // Update max width based on actual line width
+      final actualLineMetrics = textRenderer.getLineMetrics(lineText);
+      _updateMaxWidth(actualLineMetrics.width);
+
+      // Move to the next line
+      offset = range.end;
+      if (offset < text.length && text[offset] == '\n') {
+        offset++; // Skip the newline character
+      }
+    }
+
+    // Get line height from the metrics
+    if (lineMetricsList.isNotEmpty) {
+      lineHeight = lineMetricsList.first.height;
+    }
+
+    _lineHeight = lineHeight;
+    _totalLines = lines.length;
+  }
+
+  void _updateBoundsWordBased(double availableWidth) {
+    var lineHeight = 0.0;
     for (final word in text.split(' ')) {
       final wordLines = word.split('\n');
-      final possibleLine =
-          lines.isEmpty ? wordLines[0] : '${lines.last} ${wordLines[0]}';
+      final possibleLine = lines.isEmpty
+          ? wordLines[0]
+          : '${lines.last} ${wordLines[0]}';
       final metrics = textRenderer.getLineMetrics(possibleLine);
       lineHeight = max(lineHeight, metrics.height);
 
       _updateMaxWidth(metrics.width);
       final bool canAppend;
-      if (metrics.width <= maxBoxWidth - boxConfig.margins.horizontal) {
+      if (metrics.width <= availableWidth) {
         canAppend = lines.isNotEmpty;
       } else {
         canAppend = lines.isNotEmpty && lines.last == '';
@@ -194,7 +284,6 @@ class TextBoxComponent<T extends TextRenderer> extends TextComponent {
     }
     _totalLines = lines.length;
     _lineHeight = lineHeight;
-    size = _recomputeSize();
   }
 
   void _updateMaxWidth(double w) {
@@ -212,10 +301,15 @@ class TextBoxComponent<T extends TextRenderer> extends TextComponent {
     return lines.map((e) => e.length).sum;
   }
 
+  /// The index of the character that should be appearing given the fact that
+  /// [TextBoxComponent] can build up its text per character at the rate
+  /// dictated by [TextBoxConfig.timePerChar] in [boxConfig].
+  /// If the timePerChar is 0, then returns the last possible character index.
   int get currentChar => boxConfig.timePerChar == 0.0
       ? _actualTextLength
       : math.min(_lifeTime ~/ boxConfig.timePerChar, _actualTextLength);
 
+  /// The index of the line that [currentChar] belongs to.
   int get currentLine {
     var totalCharCount = 0;
     final cachedCurrentChar = currentChar;
@@ -244,14 +338,17 @@ class TextBoxComponent<T extends TextRenderer> extends TextComponent {
       var totalCharCount = 0;
       final cachedCurrentChar = currentChar;
       final cachedCurrentLine = currentLine;
-      final textWidth = lines.sublist(0, cachedCurrentLine + 1).map((line) {
-        final charCount = (i < cachedCurrentLine)
-            ? line.length
-            : (cachedCurrentChar - totalCharCount);
-        totalCharCount += line.length;
-        i++;
-        return getLineWidth(line, charCount);
-      }).reduce(math.max);
+      final textWidth = lines
+          .sublist(0, cachedCurrentLine + 1)
+          .map((line) {
+            final charCount = (i < cachedCurrentLine)
+                ? line.length
+                : (cachedCurrentChar - totalCharCount);
+            totalCharCount += line.length;
+            i++;
+            return getLineWidth(line, charCount);
+          })
+          .reduce(math.max);
       return Vector2(
         textWidth + boxConfig.margins.horizontal,
         _lineHeight * lines.length + boxConfig.margins.vertical,
@@ -282,9 +379,9 @@ class TextBoxComponent<T extends TextRenderer> extends TextComponent {
     c.scale(pixelRatio);
     _fullRender(c);
     return recorder.endRecording().toImageSafe(
-          scaledSize.x.ceil(),
-          scaledSize.y.ceil(),
-        );
+      scaledSize.x.ceil(),
+      scaledSize.y.ceil(),
+    );
   }
 
   /// Override this method to provide a custom background to the text box.
@@ -335,13 +432,34 @@ class TextBoxComponent<T extends TextRenderer> extends TextComponent {
       // See issue #1618 for details.
       Future.delayed(const Duration(milliseconds: 100), () {
         cachedToRemove.remove(cachedImage);
-        if (isMounted) {
-          cachedImage.dispose();
-        }
+        _safeDispose(cachedImage);
       });
     }
     cache = await _fullRenderAsImage(newSize);
     size = newSize;
+  }
+
+  /// Dispose of [image] best-effort, swallowing the two errors that mean
+  /// "the resource is already gone, there is nothing left to free".
+  ///
+  /// In **release** mode the production crash from issue #3724 is a
+  /// `StateError` ("Bad state: A Dart object attempted to access a native
+  /// peer, but the native peer has been collected (nullptr)") thrown when
+  /// `Image.dispose` accesses the native peer after the engine has dropped
+  /// it under memory pressure.
+  ///
+  /// In **debug** mode `Image.dispose` is guarded by `assert(!_disposed)`,
+  /// so a redundant dispose throws an `AssertionError`. Test environments
+  /// are debug-mode, hence we also catch that flavour to keep the safety
+  /// net consistent across modes.
+  static void _safeDispose(Image image) {
+    try {
+      image.dispose();
+    } on StateError {
+      // Release-mode: native peer already collected; nothing left to free.
+    } on AssertionError {
+      // Debug-mode: image already disposed by a parallel path.
+    }
   }
 
   @override
@@ -367,7 +485,10 @@ class TextBoxComponent<T extends TextRenderer> extends TextComponent {
   @mustCallSuper
   void onRemove() {
     super.onRemove();
-    cache?.dispose();
+    final cachedImage = cache;
+    if (cachedImage != null) {
+      _safeDispose(cachedImage);
+    }
     cache = null;
   }
 
@@ -382,5 +503,16 @@ class TextBoxComponent<T extends TextRenderer> extends TextComponent {
   /// [boxConfig] by themselves in [onComplete].
   void skip() {
     boxConfig = boxConfig.copyWith(timePerChar: 0);
+  }
+
+  /// Rewind the typewriter effect to start from the first character again.
+  ///
+  /// Useful for reusing this component when changing lines so that the next
+  /// line does not show immediately.
+  /// Also resets the [onComplete] call state which will be called again
+  /// when the line is finished.
+  void resetAnimation() {
+    _lifeTime = 0;
+    _isOnCompleteExecuted = false;
   }
 }

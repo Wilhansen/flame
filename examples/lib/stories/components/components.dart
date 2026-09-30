@@ -1,11 +1,13 @@
 import 'package:dashbook/dashbook.dart';
 import 'package:examples/commons/commons.dart';
 import 'package:examples/stories/components/clip_component_example.dart';
+import 'package:examples/stories/components/component_pool_example.dart';
 import 'package:examples/stories/components/components_notifier_example.dart';
 import 'package:examples/stories/components/components_notifier_provider_example.dart';
 import 'package:examples/stories/components/composability_example.dart';
 import 'package:examples/stories/components/debug_example.dart';
 import 'package:examples/stories/components/has_visibility_example.dart';
+import 'package:examples/stories/components/icon_component_example.dart';
 import 'package:examples/stories/components/keys_example.dart';
 import 'package:examples/stories/components/look_at_example.dart';
 import 'package:examples/stories/components/look_at_smooth_example.dart';
@@ -42,6 +44,14 @@ void addComponentsStories(Dashbook dashbook) {
       info: ClipComponentExample.description,
     )
     ..add(
+      'Component Pool',
+      (_) => const GameWidget.controlled(
+        gameFactory: ComponentPoolExample.new,
+      ),
+      codeLink: baseLink('components/component_pool_example.dart'),
+      info: ComponentPoolExample.description,
+    )
+    ..add(
       'Look At',
       (_) => GameWidget(game: LookAtExample()),
       codeLink: baseLink('components/look_at_example.dart'),
@@ -62,8 +72,9 @@ void addComponentsStories(Dashbook dashbook) {
     ..add(
       'Component Notifier (with provider)',
       (_) => const ComponentsNotifierProviderExampleWidget(),
-      codeLink:
-          baseLink('components/components_notifier_provider_example.dart'),
+      codeLink: baseLink(
+        'components/components_notifier_provider_example.dart',
+      ),
       info: ComponentsNotifierProviderExampleWidget.description,
     )
     ..add(
@@ -87,6 +98,12 @@ void addComponentsStories(Dashbook dashbook) {
       (_) => const KeysExampleWidget(),
       codeLink: baseLink('components/keys_example.dart'),
       info: KeysExampleWidget.description,
+    )
+    ..add(
+      'Icon Component',
+      (_) => GameWidget(game: IconComponentExample()),
+      codeLink: baseLink('components/icon_component_example.dart'),
+      info: IconComponentExample.description,
     )
     ..add(
       'HasVisibility',

@@ -1,5 +1,5 @@
 import 'package:flame/components.dart';
-import 'package:flame/src/events/flame_game_mixins/multi_drag_dispatcher.dart';
+import 'package:flame/events.dart';
 import 'package:flame_test/flame_test.dart';
 import 'package:flutter/widgets.dart';
 import 'package:test/test.dart';
@@ -45,8 +45,8 @@ void main() {
           size: 20,
           margin: const EdgeInsets.only(left: 20, bottom: 20),
         );
-        joystick.mounted.then((_) => game.onGameResize(Vector2(200, 100)));
         await game.ensureAdd(joystick);
+        game.onGameResize(Vector2(200, 100));
         expect(joystick.position, Vector2(30, 70));
       },
     );
@@ -54,8 +54,10 @@ void main() {
     testWithFlameGame(
       'properly re-positions with FixedResolutionViewport',
       (game) async {
-        game.camera =
-            CameraComponent.withFixedResolution(width: 100, height: 200);
+        game.camera = CameraComponent.withFixedResolution(
+          width: 100,
+          height: 200,
+        );
         game.onGameResize(Vector2(100, 200));
         final joystick = JoystickComponent(
           knob: CircleComponent(radius: 5.0),
@@ -83,7 +85,7 @@ void main() {
         await game.add(joystick);
         await game.ready();
         expect(joystick.knob!.position, closeToVector(Vector2(10, 10)));
-        final dragDispatcher = game.firstChild<MultiDragDispatcher>()!;
+        final dragDispatcher = game.firstChild<MultiDragScaleDispatcher>()!;
         // Start dragging the joystick
         dragDispatcher.handleDragStart(
           1,
@@ -115,6 +117,44 @@ void main() {
         );
         game.update(0);
         expect(joystick.knob!.position, closeToVector(Vector2(20, 10)));
+      },
+    );
+
+    testWithFlameGame(
+      'does not throw when joystick is removed '
+      'during an active drag and receives update',
+      (game) async {
+        final joystick = JoystickComponent(
+          knob: CircleComponent(radius: 5.0),
+          size: 20,
+          margin: const EdgeInsets.only(left: 20, top: 20),
+        );
+        await game.add(joystick);
+        await game.ready();
+        final dragDispatcher = game.firstChild<MultiDragScaleDispatcher>()!;
+
+        dragDispatcher.handleDragStart(
+          1,
+          DragStartDetails(
+            localPosition: const Offset(20, 20),
+            globalPosition: const Offset(20, 20),
+          ),
+        );
+
+        game.remove(joystick);
+        await game.ready();
+
+        expect(
+          () => dragDispatcher.handleDragUpdate(
+            1,
+            DragUpdateDetails(
+              localPosition: const Offset(21, 20),
+              globalPosition: const Offset(21, 20),
+              delta: const Offset(1, 0),
+            ),
+          ),
+          returnsNormally,
+        );
       },
     );
   });

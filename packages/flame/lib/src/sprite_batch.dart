@@ -1,5 +1,5 @@
 import 'dart:collection';
-import 'dart:math' show pi;
+import 'dart:math' show max, pi;
 import 'dart:ui';
 
 import 'package:flame/cache.dart';
@@ -18,6 +18,7 @@ extension SpriteBatchExtension on Game {
     RSTransform? defaultTransform,
     Images? imageCache,
     bool useAtlas = true,
+    String? package,
   }) {
     return SpriteBatch.load(
       path,
@@ -26,6 +27,7 @@ extension SpriteBatchExtension on Game {
       defaultTransform: defaultTransform,
       images: imageCache ?? images,
       useAtlas: useAtlas,
+      package: package,
     );
   }
 }
@@ -39,39 +41,84 @@ class BatchItem {
     required this.transform,
     Color? color,
     this.flip = false,
-  })  : paint = Paint()..color = color ?? const Color(0x00000000),
-        destination = Offset.zero & source.size;
+    this.bleed = 0,
+  }) : assert(bleed >= 0, 'Bleed must be non-negative'),
+       color = color ?? const Color(0x00000000),
+       paint = Paint()..color = color ?? const Color(0x00000000),
+       destination = bleed > 0
+           ? Rect.fromLTWH(
+               -bleed,
+               -bleed,
+               source.width + bleed * 2,
+               source.height + bleed * 2,
+             )
+           : Offset.zero & source.size;
 
   /// The source rectangle on the [SpriteBatch.atlas].
-  final Rect source;
+  Rect source;
 
-  /// The destination rectangle for the Canvas.
+  /// The destination rectangle for the Canvas, used in the non-atlas rendering
+  /// path.
   ///
-  /// It will be transformed by [matrix].
-  final Rect destination;
+  /// It will be transformed by [matrix]. When [bleed] is greater than zero,
+  /// this rect extends [bleed] pixels in each direction beyond the source
+  /// size to prevent edge artifacts in the non-atlas rendering path.
+  Rect destination;
 
   /// The transform values for this batch item.
-  final RSTransform transform;
+  RSTransform transform;
 
   /// The flip value for this batch item.
-  final bool flip;
+  bool flip;
+
+  /// The bleed value for this batch item in pixels.
+  ///
+  /// When greater than 0, the rendered sprite is expanded outward by this
+  /// amount while keeping the source sampling region the same, which helps
+  /// prevent edge artifacts (seams between tiles in a tilemap).
+  ///
+  /// Note: the atlas rendering path ([Canvas.drawAtlas]) applies a uniform
+  /// scale derived from `max(bleedScaleX, bleedScaleY)` to preserve rotation.
+  /// For non-square source rects this means the shorter axis is scaled
+  /// slightly more than the requested [bleed]. The non-atlas path always
+  /// expands by exactly [bleed] pixels on every side.
+  double bleed;
+
+  /// The color of the batch item (used for building the drawAtlas color list).
+  Color color;
 
   /// Fallback matrix for the web.
   ///
   /// Since [Canvas.drawAtlas] is not supported on the web we also
   /// build a `Matrix4` based on the [transform] and [flip] values.
-  late final Matrix4 matrix = Matrix4(
-    transform.scos, transform.ssin, 0, 0, //
-    -transform.ssin, transform.scos, 0, 0, //
-    0, 0, 0, 0, //
-    transform.tx, transform.ty, 0, 1, //
-  )
-    ..translate(source.width / 2, source.height / 2)
-    ..rotateY(flip ? pi : 0)
-    ..translate(-source.width / 2, -source.height / 2);
+  /// Recomputed lazily; call [_invalidateMatrix] after mutating [transform] or
+  /// [source].
+  Matrix4? _cachedMatrix;
+
+  Matrix4 get matrix {
+    final cached = _cachedMatrix;
+    if (cached != null) {
+      return cached;
+    }
+    // dart format off
+    final result = Matrix4(
+      transform.scos,  transform.ssin,  0, 0,
+      -transform.ssin, transform.scos,  0, 0,
+      0,               0,               0, 0,
+      transform.tx,    transform.ty,    0, 1,
+    );
+    // dart format on
+    result
+      ..translateByDouble(source.width / 2, source.height / 2, 1, 1)
+      ..rotateY(flip ? pi : 0)
+      ..translateByDouble(-source.width / 2, -source.height / 2, 1, 1);
+    return _cachedMatrix = result;
+  }
+
+  void _invalidateMatrix() => _cachedMatrix = null;
 
   /// Paint object used for the web.
-  final Paint paint;
+  Paint paint;
 }
 
 @internal
@@ -83,8 +130,7 @@ enum FlippedAtlasStatus {
   generating,
 
   /// The flipped atlas image has been generated.
-  generated,
-  ;
+  generated;
 
   bool get isNone => this == FlippedAtlasStatus.none;
   bool get isGenerating => this == FlippedAtlasStatus.generating;
@@ -116,8 +162,8 @@ class SpriteBatch {
     this.defaultBlendMode,
     Images? imageCache,
     String? imageKey,
-  })  : _imageCache = imageCache,
-        _imageKey = imageKey;
+  }) : _imageCache = imageCache,
+       _imageKey = imageKey;
 
   /// Takes a path of an image, and optional arguments for the SpriteBatch.
   ///
@@ -129,10 +175,11 @@ class SpriteBatch {
     Color? defaultColor,
     BlendMode? defaultBlendMode,
     bool useAtlas = true,
+    String? package,
   }) async {
     final imagesCache = images ?? Flame.images;
     return SpriteBatch(
-      await imagesCache.load(path),
+      await imagesCache.load(path, package: package),
       defaultTransform: defaultTransform ?? RSTransform(1, 0, 0, 0),
       defaultColor: defaultColor,
       defaultBlendMode: defaultBlendMode,
@@ -144,37 +191,55 @@ class SpriteBatch {
 
   FlippedAtlasStatus _flippedAtlasStatus = FlippedAtlasStatus.none;
 
-  /// List of all the existing batch items.
-  final _batchItems = <BatchItem>[];
+  final List<BatchItem> _batchItems = <BatchItem>[];
+  final List<Rect> _sources = <Rect>[];
+  final List<RSTransform> _transforms = <RSTransform>[];
+  final List<Color> _colors = <Color>[];
 
-  /// The sources to use on the [atlas].
-  final _sources = <Rect>[];
-
-  /// The sources list shouldn't be modified directly, that is why an
-  /// [UnmodifiableListView] is used. If you want to add sources use the
-  /// [add] or [addTransform] method.
   UnmodifiableListView<Rect> get sources {
     return UnmodifiableListView<Rect>(_sources);
   }
 
-  /// The transforms that should be applied on the [_sources].
-  final _transforms = <RSTransform>[];
-
-  /// The transforms list shouldn't be modified directly, that is why an
-  /// [UnmodifiableListView] is used. If you want to add transforms use the
-  /// [add] or [addTransform] method.
   UnmodifiableListView<RSTransform> get transforms {
     return UnmodifiableListView<RSTransform>(_transforms);
   }
 
-  /// The background color for the [_sources].
-  final _colors = <Color>[];
-
-  /// The colors list shouldn't be modified directly, that is why an
-  /// [UnmodifiableListView] is used. If you want to add colors use the
-  /// [add] or [addTransform] method.
   UnmodifiableListView<Color> get colors {
     return UnmodifiableListView<Color>(_colors);
+  }
+
+  /// Handle/index management (free list strategy).
+  final Queue<int> _freeHandles = Queue<int>();
+
+  /// The next handle to allocate if there are no free handles.
+  int _nextHandle = 0;
+
+  /// Map handle -> dense slot index.
+  final Map<int, int> _handleToSlot = <int, int>{};
+
+  /// Reverse map: dense slot -> handle.
+  final List<int> _slotToHandle = <int>[];
+
+  /// The total number of allocated handles.
+  int get allocatedCount => _nextHandle;
+
+  /// The number of free handles.
+  int get freeCount => _freeHandles.length;
+
+  /// The number of used handles.
+  int get usedCount => _handleToSlot.length;
+
+  /// Allocates a new handle.
+  int _allocateHandle() {
+    if (_freeHandles.isNotEmpty) {
+      return _freeHandles.removeFirst();
+    }
+    return _nextHandle++;
+  }
+
+  /// Frees a handle for future reuse.
+  void _freeHandle(int handle) {
+    _freeHandles.addFirst(handle);
   }
 
   /// The atlas used by the [SpriteBatch].
@@ -197,7 +262,10 @@ class SpriteBatch {
       imageCache.findKeyForImage(atlas) ??
       'image[${identityHashCode(atlas)}]';
 
-  /// The default color, used as a background color for a [BatchItem].
+  /// The default color, used as a background color for a [BatchItem] on web.
+  ///
+  /// Note: The drawAtlas color list uses [_defaultColor]
+  /// unless an explicit per-item color is provided.
   final Color? defaultColor;
 
   /// The default transform, used when a transform was not supplied for a
@@ -222,6 +290,10 @@ class SpriteBatch {
   /// Does this batch contain any operations?
   bool get isEmpty => _batchItems.isEmpty;
 
+  // Used to not create new Paint objects in [render] and
+  // [generateFlippedAtlas].
+  final _emptyPaint = Paint();
+
   Future<void> _makeFlippedAtlas() async {
     _flippedAtlasStatus = FlippedAtlasStatus.generating;
     final key = '$imageKey#with-flips';
@@ -243,13 +315,83 @@ class SpriteBatch {
     return picture.toImageSafe(image.width * 2, image.height);
   }
 
-  int get length => _sources.length;
+  /// Resolves the source rectangle for the atlas, taking into account if a
+  /// flipped atlas is being used.
+  Rect _resolveSourceForAtlas(BatchItem batchItem) {
+    if (!batchItem.flip) {
+      return batchItem.source;
+    }
 
-  /// Replace provided values of a batch item at the [index], when a parameter
-  /// is not provided, the original value of the batch item will be used.
+    // The atlas is twice as wide when the flipped atlas is generated.
+    final atlasWidthMultiplier = _flippedAtlasStatus.isGenerated ? 1 : 2;
+    return Rect.fromLTWH(
+      (atlas.width * atlasWidthMultiplier) - batchItem.source.right,
+      batchItem.source.top,
+      batchItem.source.width,
+      batchItem.source.height,
+    );
+  }
+
+  /// Computes a transform with bleed applied.
   ///
-  /// Throws an [ArgumentError] if the [index] is out of bounds.
+  /// The bleed expands the destination rectangle outward by the bleed amount
+  /// in all directions while keeping the source sampling region unchanged.
+  /// This helps prevent edge artifacts (seams between tiles in a tilemap).
+  ///
+  /// A uniform scale factor derived from `max(bleedScaleX, bleedScaleY)` is
+  /// used so that rotation is preserved. For non-square [source] rects this
+  /// means the shorter axis is scaled slightly beyond the requested [bleed].
+  static RSTransform _computeBleedTransform(
+    RSTransform transform,
+    Rect source,
+    double bleed,
+  ) {
+    if (bleed <= 0) {
+      return transform;
+    }
+
+    if (source.width <= 0 || source.height <= 0) {
+      return transform;
+    }
+
+    // Scale factors for width and height with bleed; use max for uniform scale
+    // to preserve rotation when width != height.
+    final scaleX = (source.width + bleed * 2) / source.width;
+    final scaleY = (source.height + bleed * 2) / source.height;
+    final scale = max(scaleX, scaleY);
+
+    final scos = transform.scos * scale;
+    final ssin = transform.ssin * scale;
+
+    // Compute the local delta needed to keep the center fixed after scaling.
+    final localDx = -(scale - 1) * source.width / 2;
+    final localDy = -(scale - 1) * source.height / 2;
+
+    // Transform the local delta to world space using the existing
+    // scale+rotation.
+    final tx =
+        transform.tx + transform.scos * localDx - transform.ssin * localDy;
+    final ty =
+        transform.ty + transform.ssin * localDx + transform.scos * localDy;
+
+    return RSTransform(scos, ssin, tx, ty);
+  }
+
+  /// Ensures that the given [handle] exists and returns its slot.
+  int _requireSlot(int handle) {
+    final slot = _handleToSlot[handle];
+    if (slot == null) {
+      throw ArgumentError('Index does not exist: $handle');
+    }
+    return slot;
+  }
+
+  /// Replaces the parameters of the batch item at the given [index].
   /// At least one of the parameters must be different from null.
+  ///
+  /// Note: the `bleed` value of a batch item cannot be changed after creation.
+  /// To use a different bleed value, remove the item with [removeAt] and add a
+  /// new one with [add].
   void replace(
     int index, {
     Rect? source,
@@ -261,23 +403,48 @@ class SpriteBatch {
       'At least one of the parameters must be different from null.',
     );
 
-    if (index < 0 || index >= length) {
-      throw ArgumentError('Index out of bounds: $index');
+    final slot = _requireSlot(index);
+    final currentBatchItem = _batchItems[slot];
+
+    if (source != null) {
+      currentBatchItem.source = source;
+      final bleed = currentBatchItem.bleed;
+      currentBatchItem.destination = bleed > 0
+          ? Rect.fromLTWH(
+              -bleed,
+              -bleed,
+              source.width + bleed * 2,
+              source.height + bleed * 2,
+            )
+          : Offset.zero & source.size;
+      currentBatchItem._invalidateMatrix();
+    }
+    if (transform != null) {
+      currentBatchItem.transform = transform;
+      currentBatchItem._invalidateMatrix();
+    }
+    if (color != null) {
+      currentBatchItem.color = color;
+      currentBatchItem.paint.color = color;
     }
 
-    final currentBatchItem = _batchItems[index];
-    final newBatchItem = BatchItem(
-      source: source ?? currentBatchItem.source,
-      transform: transform ?? currentBatchItem.transform,
-      color: color ?? currentBatchItem.paint.color,
-      flip: currentBatchItem.flip,
+    _sources[slot] = _resolveSourceForAtlas(currentBatchItem);
+
+    // Apply bleed to the updated transform
+    _transforms[slot] = _computeBleedTransform(
+      currentBatchItem.transform,
+      currentBatchItem.source,
+      currentBatchItem.bleed,
     );
 
-    _batchItems[index] = newBatchItem;
+    // If color is not explicitly provided, store transparent.
+    _colors[slot] = color ?? _defaultColor;
+  }
 
-    _sources[index] = newBatchItem.source;
-    _transforms[index] = newBatchItem.transform;
-    _colors[index] = color ?? _defaultColor;
+  /// Gets the [BatchItem] at the given [index].
+  BatchItem getBatchItem(int index) {
+    final slot = _requireSlot(index);
+    return _batchItems[slot];
   }
 
   /// Add a new batch item using a RSTransform.
@@ -290,43 +457,61 @@ class SpriteBatch {
   /// The [color] parameter allows you to render a color behind the batch item,
   /// as a background color.
   ///
+  /// The [bleed] parameter expands the rendered sprite outward by this amount
+  /// in all directions while keeping the source sampling region the same. This
+  /// helps prevent edge artifacts (seams between tiles in a tilemap). For best
+  /// results, the atlas should have padding between sprites.
+  ///
+  /// Note: when [useAtlas] is true, a uniform scale is applied (see
+  /// [BatchItem.bleed]). For non-square sources the shorter axis is scaled
+  /// slightly more than the exact [bleed] value.
+  ///
   /// The [add] method may be a simpler way to add a batch item to the batch.
   /// However, if there is a way to factor out the computations of the sine and
   /// cosine of the rotation so that they can be reused over multiple calls to
   /// this constructor, it may be more efficient to directly use this method
   /// instead.
-  void addTransform({
+  int addTransform({
     required Rect source,
     RSTransform? transform,
     bool flip = false,
     Color? color,
+    double bleed = 0,
   }) {
+    final handle = _allocateHandle();
+
     final batchItem = BatchItem(
       source: source,
       transform: transform ??= defaultTransform ?? RSTransform(1, 0, 0, 0),
       flip: flip,
       color: color ?? defaultColor,
+      bleed: bleed,
     );
 
     if (flip && useAtlas && _flippedAtlasStatus.isNone) {
       _makeFlippedAtlas();
     }
 
+    final slot = _batchItems.length;
+
+    _handleToSlot[handle] = slot;
+    _slotToHandle.add(handle);
+
     _batchItems.add(batchItem);
-    _sources.add(
-      flip
-          ? Rect.fromLTWH(
-              // The atlas is twice as wide when the flipped atlas is generated.
-              (atlas.width * (_flippedAtlasStatus.isGenerated ? 1 : 2)) -
-                  source.right,
-              source.top,
-              source.width,
-              source.height,
-            )
-          : batchItem.source,
+    _sources.add(_resolveSourceForAtlas(batchItem));
+
+    // Apply bleed to the transform
+    final bleedTransform = _computeBleedTransform(
+      batchItem.transform,
+      batchItem.source,
+      batchItem.bleed,
     );
-    _transforms.add(batchItem.transform);
+    _transforms.add(bleedTransform);
+
+    // If color is not explicitly provided, store transparent.
     _colors.add(color ?? _defaultColor);
+
+    return handle;
   }
 
   /// Add a new batch item.
@@ -340,6 +525,15 @@ class SpriteBatch {
   /// The [color] parameter allows you to render a color behind the batch item,
   /// as a background color.
   ///
+  /// The [bleed] parameter expands the rendered sprite outward by this amount
+  /// in all directions while keeping the source sampling region the same. This
+  /// helps prevent edge artifacts (seams between tiles in a tilemap). For best
+  /// results, the atlas should have padding between sprites.
+  ///
+  /// Note: when [useAtlas] is true, a uniform scale is applied (see
+  /// [BatchItem.bleed]). For non-square sources the shorter axis is scaled
+  /// slightly more than the exact [bleed] value.
+  ///
   /// This method creates a new [RSTransform] based on the given transform
   /// arguments. If many [RSTransform] objects are being created and there is a
   /// way to factor out the computations of the sine and cosine of the rotation
@@ -347,7 +541,7 @@ class SpriteBatch {
   /// multiple [RSTransform] objects,
   /// it may be more efficient to directly use the more direct [addTransform]
   /// method instead.
-  void add({
+  int add({
     required Rect source,
     double scale = 1.0,
     Vector2? anchor,
@@ -355,6 +549,7 @@ class SpriteBatch {
     Vector2? offset,
     bool flip = false,
     Color? color,
+    double bleed = 0,
   }) {
     anchor ??= Vector2.zero();
     offset ??= Vector2.zero();
@@ -377,12 +572,42 @@ class SpriteBatch {
       );
     }
 
-    addTransform(
+    return addTransform(
       source: source,
       transform: transform,
       flip: flip,
       color: color,
+      bleed: bleed,
     );
+  }
+
+  /// Removes the batch item at the given [index].
+  void removeAt(int index) {
+    final slot = _requireSlot(index);
+
+    final lastSlot = _batchItems.length - 1;
+    final removedHandle = _slotToHandle[slot];
+
+    if (slot != lastSlot) {
+      // Move last -> slot.
+      _batchItems[slot] = _batchItems[lastSlot];
+      _sources[slot] = _sources[lastSlot];
+      _transforms[slot] = _transforms[lastSlot];
+      _colors[slot] = _colors[lastSlot];
+
+      final movedHandle = _slotToHandle[lastSlot];
+      _slotToHandle[slot] = movedHandle;
+      _handleToSlot[movedHandle] = slot;
+    }
+
+    _batchItems.removeLast();
+    _sources.removeLast();
+    _transforms.removeLast();
+    _colors.removeLast();
+    _slotToHandle.removeLast();
+
+    _handleToSlot.remove(removedHandle);
+    _freeHandle(removedHandle);
   }
 
   /// Clear the SpriteBatch so it can be reused.
@@ -391,11 +616,12 @@ class SpriteBatch {
     _transforms.clear();
     _colors.clear();
     _batchItems.clear();
-  }
 
-  // Used to not create new Paint objects in [render] and
-  // [generateFlippedAtlas].
-  final _emptyPaint = Paint();
+    _handleToSlot.clear();
+    _slotToHandle.clear();
+    _freeHandles.clear();
+    _nextHandle = 0;
+  }
 
   void render(
     Canvas canvas, {
@@ -411,6 +637,7 @@ class SpriteBatch {
 
     final hasNoColors = _colors.every((c) => c == _defaultColor);
     final actualBlendMode = blendMode ?? defaultBlendMode;
+
     if (!hasNoColors && actualBlendMode == null) {
       throw 'When setting any colors, a blend mode must be provided.';
     }
@@ -429,10 +656,14 @@ class SpriteBatch {
       for (final batchItem in _batchItems) {
         renderPaint.blendMode = blendMode ?? renderPaint.blendMode;
 
+        // Use the original (non-expanded) rect for the background color so
+        // that per-item colors match the atlas path behavior.
+        final colorRect = Offset.zero & batchItem.source.size;
+
         canvas
           ..save()
           ..transform32(batchItem.matrix.storage)
-          ..drawRect(batchItem.destination, batchItem.paint)
+          ..drawRect(colorRect, batchItem.paint)
           ..drawImageRect(
             atlas,
             batchItem.source,

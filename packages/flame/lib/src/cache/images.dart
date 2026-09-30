@@ -1,5 +1,5 @@
 import 'dart:async';
-import 'dart:convert' show base64, json;
+import 'dart:convert' show base64;
 import 'dart:ui';
 
 import 'package:flame/src/flame.dart';
@@ -10,8 +10,8 @@ class Images {
   Images({
     String prefix = 'assets/images/',
     AssetBundle? bundle,
-  })  : _prefix = prefix,
-        bundle = bundle ?? Flame.bundle;
+  }) : _prefix = prefix,
+       bundle = bundle ?? Flame.bundle;
 
   final Map<String, _ImageAsset> _assets = {};
 
@@ -66,8 +66,9 @@ class Images {
     String name,
     Future<Image> Function() imageGenerator,
   ) {
-    return (_assets[name] ??= _ImageAsset.future(imageGenerator()))
-        .retrieveAsync();
+    return (_assets[name] ??= _ImageAsset.future(
+      imageGenerator(),
+    )).retrieveAsync();
   }
 
   /// Removes the image [name] from the cache.
@@ -116,10 +117,10 @@ class Images {
   /// Loads the specified image with [fileName] into the cache.
   /// By default the key in the cache is the [fileName], if another key is
   /// desired, specify the optional [key] argument.
-  Future<Image> load(String fileName, {String? key}) {
-    return (_assets[key ?? fileName] ??=
-            _ImageAsset.future(_fetchToMemory(fileName)))
-        .retrieveAsync();
+  Future<Image> load(String fileName, {String? key, String? package}) {
+    return (_assets[key ?? fileName] ??= _ImageAsset.future(
+      _fetchToMemory(fileName, package: package),
+    )).retrieveAsync();
   }
 
   /// Loads all images with the specified [fileNames] into the cache.
@@ -140,11 +141,14 @@ class Images {
   /// Loads all images in the [prefix]ed path that are matching the specified
   /// pattern.
   Future<List<Image>> loadAllFromPattern(Pattern pattern) async {
-    final manifestContent = await bundle.loadString('AssetManifest.json');
-    final manifestMap = json.decode(manifestContent) as Map<String, dynamic>;
-    final imagePaths = manifestMap.keys.where((path) {
-      return path.startsWith(_prefix) && path.toLowerCase().contains(pattern);
-    }).map((path) => path.replaceFirst(_prefix, ''));
+    final manifest = await AssetManifest.loadFromAssetBundle(bundle);
+    final imagePaths = manifest
+        .listAssets()
+        .where((path) {
+          return path.startsWith(_prefix) &&
+              path.toLowerCase().contains(pattern);
+        })
+        .map((path) => path.replaceFirst(_prefix, ''));
     return loadAll(imagePaths.toList());
   }
 
@@ -166,8 +170,9 @@ class Images {
   }
 
   Future<Image> fromBase64(String key, String base64) {
-    return (_assets[key] ??= _ImageAsset.future(_fetchFromBase64(base64)))
-        .retrieveAsync();
+    return (_assets[key] ??= _ImageAsset.future(
+      _fetchFromBase64(base64),
+    )).retrieveAsync();
   }
 
   Future<Image> _fetchFromBase64(String base64Data) {
@@ -176,8 +181,9 @@ class Images {
     return decodeImageFromList(bytes);
   }
 
-  Future<Image> _fetchToMemory(String name) async {
-    final data = await bundle.load('$_prefix$name');
+  Future<Image> _fetchToMemory(String name, {String? package}) async {
+    final prefix = package == null ? _prefix : 'packages/$package/$_prefix';
+    final data = await bundle.load('$prefix$name');
     final bytes = Uint8List.view(data.buffer);
     return decodeImageFromList(bytes);
   }

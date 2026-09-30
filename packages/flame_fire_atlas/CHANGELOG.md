@@ -1,3 +1,44 @@
+## 1.8.18
+
+ - Update a dependency to the latest release.
+
+## 1.8.17
+
+ - Update a dependency to the latest release.
+
+## 1.8.16
+
+ - **FIX**: Fix warnings on flame_fire_atlas.dart ([#3818](https://github.com/flame-engine/flame/issues/3818)). ([458a79a9](https://github.com/flame-engine/flame/commit/458a79a97d63d128ab127fc15616192114dc9448))
+ - **FIX**: Bump Flutter min version to 3.41.0 ([#3807](https://github.com/flame-engine/flame/issues/3807)). ([0d505304](https://github.com/flame-engine/flame/commit/0d50530485e5be9ce1c9138a5b437607c7c5c628))
+
+## 1.8.15
+
+ - Update a dependency to the latest release.
+
+## 1.8.14
+
+ - Update a dependency to the latest release.
+
+## 1.8.13
+
+ - Update a dependency to the latest release.
+
+## 1.8.12
+
+ - **DOCS**: Deprecate TapDetector in favour of TapCallbacks ([#2886](https://github.com/flame-engine/flame/issues/2886)). ([b173697b](https://github.com/flame-engine/flame/commit/b173697bfb7ea61287251c43cd3c9d2fdb448fe3))
+
+## 1.8.11
+
+ - Update a dependency to the latest release.
+
+## 1.8.10
+
+ - Update a dependency to the latest release.
+
+## 1.8.9
+
+ - Update a dependency to the latest release.
+
 ## 1.8.8
 
  - Update a dependency to the latest release.

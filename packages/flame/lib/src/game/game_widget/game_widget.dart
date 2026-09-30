@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flame/events.dart';
 import 'package:flame/extensions.dart';
 import 'package:flame/game.dart';
 import 'package:flame/input.dart';
@@ -33,8 +34,9 @@ import 'package:flutter/widgets.dart';
 ///
 /// In addition to hosting a [Game] instance, the `GameWidget` also provides
 /// some structural support, with the following features:
+///
 /// - [loadingBuilder] to display something while the game is loading;
-/// - [errorBuilder] which will be shows if the game throws an error;
+/// - [errorBuilder] shown if the game throws an error;
 /// - [backgroundBuilder] to draw some decoration behind the game;
 /// - [overlayBuilderMap] to draw one or more widgets on top of the game.
 ///
@@ -56,6 +58,7 @@ class GameWidget<T extends Game> extends StatefulWidget {
     this.autofocus = true,
     this.mouseCursor,
     this.addRepaintBoundary = true,
+    this.behavior = HitTestBehavior.opaque,
     super.key,
   }) : gameFactory = null {
     _initializeGame(game!);
@@ -92,6 +95,7 @@ class GameWidget<T extends Game> extends StatefulWidget {
     this.autofocus = true,
     this.mouseCursor,
     this.addRepaintBoundary = true,
+    this.behavior = HitTestBehavior.opaque,
     super.key,
   }) : game = null;
 
@@ -161,6 +165,18 @@ class GameWidget<T extends Game> extends StatefulWidget {
   /// defaults to `true`.
   final bool addRepaintBoundary;
 
+  /// How the game widget behaves during hit testing.
+  ///
+  /// - [HitTestBehavior.opaque] (default): the game absorbs all pointer
+  ///   events on its surface, preventing widgets behind it from receiving them.
+  /// - [HitTestBehavior.deferToChild]: the game only intercepts events at
+  ///   positions where a component with event callbacks (e.g. [TapCallbacks])
+  ///   exists. Events at other positions pass through to widgets behind.
+  /// - [HitTestBehavior.translucent]: the game receives events where it has
+  ///   event-handling components, but always allows widgets behind it to be
+  ///   hit-tested as well.
+  final HitTestBehavior behavior;
+
   /// Renders a [game] in a flutter widget tree alongside widgets overlays.
   ///
   /// To use overlays, the game subclass has to be mixed with HasWidgetsOverlay.
@@ -189,14 +205,14 @@ class GameWidgetState<T extends Game> extends State<GameWidget<T>> {
   late T currentGame;
 
   Future<void> get loaderFuture => _loaderFuture ??= (() async {
-        final game = currentGame;
-        assert(game.hasLayout);
-        await game.load();
-        game.mount();
-        if (!game.paused) {
-          game.update(0);
-        }
-      })();
+    final game = currentGame;
+    assert(game.hasLayout);
+    await game.load();
+    game.mount();
+    if (!game.paused) {
+      game.update(0);
+    }
+  })();
 
   Future<void>? _loaderFuture;
 
@@ -275,6 +291,7 @@ class GameWidgetState<T extends Game> extends State<GameWidget<T>> {
     currentGame.removeGameStateListener(_onGameStateChange);
     currentGame.lifecycleStateChange(AppLifecycleState.paused);
     currentGame.finalizeRemoval();
+    currentGame.widgetBuildContext = null;
     if (callGameOnDispose) {
       currentGame.onDispose();
     }
@@ -298,6 +315,12 @@ class GameWidgetState<T extends Game> extends State<GameWidget<T>> {
       disposeCurrentGame();
       initCurrentGame();
     }
+  }
+
+  @override
+  void reassemble() {
+    super.reassemble();
+    currentGame.onHotReload();
   }
 
   @override
@@ -333,6 +356,7 @@ class GameWidgetState<T extends Game> extends State<GameWidget<T>> {
       Widget? internalGameWidget = RenderGameWidget(
         game: currentGame,
         addRepaintBoundary: widget.addRepaintBoundary,
+        behavior: widget.behavior,
       );
 
       assert(
@@ -342,8 +366,9 @@ class GameWidgetState<T extends Game> extends State<GameWidget<T>> {
         'not receive events',
       );
 
-      internalGameWidget =
-          currentGame.gestureDetectors.build(internalGameWidget);
+      internalGameWidget = currentGame.gestureDetectors.build(
+        internalGameWidget,
+      );
 
       if (hasMouseDetectors(currentGame)) {
         internalGameWidget = applyMouseDetectors(
@@ -367,12 +392,15 @@ class GameWidgetState<T extends Game> extends State<GameWidget<T>> {
           onKeyEvent: _handleKeyEvent,
           child: MouseRegion(
             cursor: currentGame.mouseCursor,
+            opaque: widget.behavior == HitTestBehavior.opaque,
             child: Directionality(
               textDirection: textDir,
-              child: ColoredBox(
-                color: currentGame.backgroundColor(),
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  color: currentGame.backgroundColor(),
+                ),
                 child: LayoutBuilder(
-                  builder: (_, BoxConstraints constraints) {
+                  builder: (layoutContext, BoxConstraints constraints) {
                     return _protectedBuild(() {
                       final size = constraints.biggest.toVector2();
                       if (size.isZero()) {
@@ -380,6 +408,7 @@ class GameWidgetState<T extends Game> extends State<GameWidget<T>> {
                             Container();
                       }
                       currentGame.onGameResize(size);
+                      currentGame.widgetBuildContext = layoutContext;
                       // This should only be called if the game has already been
                       // loaded (in the case of resizing for example), since
                       // update otherwise should be called after onMount.
@@ -442,9 +471,10 @@ typedef GameLoadingWidgetBuilder = Widget Function(BuildContext);
 
 typedef GameErrorWidgetBuilder = Widget Function(BuildContext, Object error);
 
-typedef OverlayWidgetBuilder<T extends Game> = Widget Function(
-  BuildContext context,
-  T game,
-);
+typedef OverlayWidgetBuilder<T extends Game> =
+    Widget Function(
+      BuildContext context,
+      T game,
+    );
 
 typedef GameFactory<T extends Game> = T Function();

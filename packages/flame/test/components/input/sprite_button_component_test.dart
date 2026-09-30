@@ -1,10 +1,10 @@
 import 'dart:ui';
 
+import 'package:flame/events.dart';
 import 'package:flame/game.dart';
 import 'package:flame/input.dart';
 import 'package:flame/src/anchor.dart';
 import 'package:flame/src/components/sprite_group_component.dart';
-import 'package:flame/src/events/flame_game_mixins/multi_tap_dispatcher.dart';
 import 'package:flame/src/sprite_sheet.dart';
 import 'package:flame_test/flame_test.dart';
 import 'package:flutter/material.dart';
@@ -106,8 +106,9 @@ Future<void> main() async {
         ),
       );
 
-      final previousPosition =
-          button.positionOfAnchor(Anchor.center).toOffset();
+      final previousPosition = button
+          .positionOfAnchor(Anchor.center)
+          .toOffset();
       game.onGameResize(initialGameSize * 2);
       final tapDispatcher = game.firstChild<MultiTapDispatcher>()!;
 
@@ -249,8 +250,9 @@ Future<void> main() async {
       expect(component.current, _ButtonState.up);
     });
 
-    testWithFlameGame('correctly registers taps onGameResize (custom button)',
-        (game) async {
+    testWithFlameGame('correctly registers taps onGameResize (custom button)', (
+      game,
+    ) async {
       final initialGameSize = Vector2.all(100);
       final componentSize = Vector2.all(10);
       final buttonPosition = Vector2.all(100);
@@ -281,8 +283,9 @@ Future<void> main() async {
         ),
       );
 
-      final previousPosition =
-          button.positionOfAnchor(Anchor.center).toOffset();
+      final previousPosition = button
+          .positionOfAnchor(Anchor.center)
+          .toOffset();
       game.onGameResize(initialGameSize * 2);
       final tapDispatcher = game.firstChild<MultiTapDispatcher>()!;
 

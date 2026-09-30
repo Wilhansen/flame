@@ -1,3 +1,87 @@
+## 0.3.0
+
+> Note: This release has breaking changes.
+
+ - **REFACTOR**(flame_3d): Abstract GPU implementation away for future proofing different backends ([#3928](https://github.com/flame-engine/flame/issues/3928)). ([f625173d](https://github.com/flame-engine/flame/commit/f625173d2b3ab2685b7b759c213a675b969af432))
+ - **REFACTOR**(flame_3d): Shader generation now supports `#include` ([#3924](https://github.com/flame-engine/flame/issues/3924)). ([2be34f8e](https://github.com/flame-engine/flame/commit/2be34f8e780abcc2737c1dbcdf4b12cbd835352f))
+ - **FEAT**(flame_3d): Add experimental `web` support using `webgpu` backend ([#3930](https://github.com/flame-engine/flame/issues/3930)). ([f21c5a8a](https://github.com/flame-engine/flame/commit/f21c5a8a5a08f973bd149aa40f1fc87ec160936b))
+ - **FEAT**(flame_3d): Expose mesh information as read-only ([#3927](https://github.com/flame-engine/flame/issues/3927)). ([c5c3e662](https://github.com/flame-engine/flame/commit/c5c3e662dc434ec28882ea1fe284159a85517cf3))
+ - **FEAT**(flame_3d): Add `UnlitMaterial` support ([#3914](https://github.com/flame-engine/flame/issues/3914)). ([9c88ff8c](https://github.com/flame-engine/flame/commit/9c88ff8cd9f2e6d351592eecf6156940c0361dd9))
+ - **BREAKING** **FIX**(flame_3d): Fix material on `Line3D` ([#3916](https://github.com/flame-engine/flame/issues/3916)). ([f6fc6104](https://github.com/flame-engine/flame/commit/f6fc61042728c89c756077ba32071cec30d9bd8f))
+ - **BREAKING** **FEAT**(flame_3d): Introduce `RenderContext` to make `GraphicsDevice` focused ([#3872](https://github.com/flame-engine/flame/issues/3872)). ([4338c624](https://github.com/flame-engine/flame/commit/4338c624da5b17e73a88fcb260dca5af14fc5a7f))
+
+## 0.2.0
+
+> Note: This release has breaking changes.
+
+ - **REFACTOR**(flame_3d): Optimize allocation time in shaders ([#3881](https://github.com/flame-engine/flame/issues/3881)). ([043d6e8f](https://github.com/flame-engine/flame/commit/043d6e8f4b7b05cf56a313d5033f205c070b11fb))
+ - **REFACTOR**(flame_3d): Simplify uniform slot definitions and allocations ([#3873](https://github.com/flame-engine/flame/issues/3873)). ([9c61971d](https://github.com/flame-engine/flame/commit/9c61971dfca20fc3bb1cd221e5b3e256fcac84ca))
+ - **FIX**(flame_3d): Ensure `children` parameter is passed to constructors in `MeshComponent` and `ModelComponent` ([#3884](https://github.com/flame-engine/flame/issues/3884)). ([adc7658b](https://github.com/flame-engine/flame/commit/adc7658b6a4bce939e3f2e80ba8af3d789b0ce0b))
+ - **FIX**(flame_3d): Ensure proper ambient light calculation in spatial_material shader ([#3866](https://github.com/flame-engine/flame/issues/3866)). ([be8607ac](https://github.com/flame-engine/flame/commit/be8607ac481224ce3746c501af1f089dd0077fc9))
+ - **FEAT**(flame_3d): Allow shader uniform structures use array elements ([#3878](https://github.com/flame-engine/flame/issues/3878)). ([9854f130](https://github.com/flame-engine/flame/commit/9854f130a87b6240611089338ab69555aec3814f))
+ - **FEAT**(flame_3d): Add culling scenario and implement AABB frustum culling logic([#3868](https://github.com/flame-engine/flame/issues/3868)). ([ce1d42ad](https://github.com/flame-engine/flame/commit/ce1d42adfb93ebd2856f001fc624da6f9ea22643))
+ - **FEAT**(flame_3d): Support cull mode on materials ([#3865](https://github.com/flame-engine/flame/issues/3865)). ([e407a6e1](https://github.com/flame-engine/flame/commit/e407a6e16f6849236b1d56061920db72d74763ec))
+ - **BREAKING** **REFACTOR**(flame_3d): Allow `LightComponents` to be nested ([#3883](https://github.com/flame-engine/flame/issues/3883)). ([fbd9b676](https://github.com/flame-engine/flame/commit/fbd9b676fe58978b60f811673a631fad391a3942))
+ - **BREAKING** **REFACTOR**(flame_3d): Simplify shader structure and remove no longer needed uniform classes ([#3880](https://github.com/flame-engine/flame/issues/3880)). ([1d799fdc](https://github.com/flame-engine/flame/commit/1d799fdceca6b750f4fa7161f0865b58fa4ec575))
+ - **BREAKING** **FIX**(flame_3d): Change type on `Surface` to be non-nullable ([#3882](https://github.com/flame-engine/flame/issues/3882)). ([67938373](https://github.com/flame-engine/flame/commit/679383739af4476088953bdfc4dc93635434305c))
+ - **BREAKING** **FEAT**(flame_3d): Allow for nested Component3D by using world matrix calculations ([#3867](https://github.com/flame-engine/flame/issues/3867)). ([48d0a847](https://github.com/flame-engine/flame/commit/48d0a8474b55e7e2e45941f721d889c04e46bdaf))
+
+## 0.1.1+7
+
+ - **FIX**(flame_3d): Use float for numLights uniform to fix GLES crash ([#3810](https://github.com/flame-engine/flame/issues/3810)). ([f241ebd6](https://github.com/flame-engine/flame/commit/f241ebd6d73caa43387972cffeb609af2909ac2f))
+ - **FIX**(flame_3d): Fix alpha blend factors for transparent background compositing ([#3812](https://github.com/flame-engine/flame/issues/3812)). ([8d7212a1](https://github.com/flame-engine/flame/commit/8d7212a1c79d561330131ea794a0ed318c3945f8))
+ - **FIX**(flame_3d): Remove duplicate baseColor multiply in ambient calculation ([#3814](https://github.com/flame-engine/flame/issues/3814)). ([080bde7f](https://github.com/flame-engine/flame/commit/080bde7f4c14c9f4f91e09d9bf6e737f75449351))
+ - **FIX**: Use scaledRadius for CircleHitbox collision detection ([#3808](https://github.com/flame-engine/flame/issues/3808)). ([3498c1e5](https://github.com/flame-engine/flame/commit/3498c1e565985ce7d12212e6a625f538da98c362))
+ - **FIX**: Bump Flutter min version to 3.41.0 ([#3807](https://github.com/flame-engine/flame/issues/3807)). ([0d505304](https://github.com/flame-engine/flame/commit/0d50530485e5be9ce1c9138a5b437607c7c5c628))
+
+## 0.1.1+6
+
+ - Update a dependency to the latest release.
+
+## 0.1.1+5
+
+ - Update a dependency to the latest release.
+
+## 0.1.1+4
+
+ - Update a dependency to the latest release.
+
+## 0.1.1+3
+
+ - Update a dependency to the latest release.
+
+## 0.1.1+2
+
+ - **DOCS**: Update README.md of flame_3d with newer instructions ([#3711](https://github.com/flame-engine/flame/issues/3711)). ([ad7dc059](https://github.com/flame-engine/flame/commit/ad7dc059f2f97e7bc78a74bdff149b26adb22fbc))
+
+## 0.1.1+1
+
+ - **FIX**: When parsing OBJs with no normals, fallback to normal generation ([#3708](https://github.com/flame-engine/flame/issues/3708)). ([a59ccaa3](https://github.com/flame-engine/flame/commit/a59ccaa341a562c25ad54f4af567b160084e06d8))
+ - **FIX**: Update compiled shaderbundle for flame_3d and add color example ([#3704](https://github.com/flame-engine/flame/issues/3704)). ([a1070d97](https://github.com/flame-engine/flame/commit/a1070d975fd3af52d44f3febb13dd97afd4990a6))
+
+## 0.1.1
+
+ - **FIX**: Cleanup and make OBJ parser more resilient ([#3702](https://github.com/flame-engine/flame/issues/3702)). ([b96421d5](https://github.com/flame-engine/flame/commit/b96421d5035393d764a9ec34aeba8db380222f45))
+ - **FIX**: Fix color to byte conversion for shaders ([#3700](https://github.com/flame-engine/flame/issues/3700)). ([2426c06b](https://github.com/flame-engine/flame/commit/2426c06b799797720c9df8fbd73e337422654d00))
+ - **FIX**: Add fallback default material to avoid crashes ([#3701](https://github.com/flame-engine/flame/issues/3701)). ([8e6b04e3](https://github.com/flame-engine/flame/commit/8e6b04e38855b6fae6761a9f8d20c82c6bff6d76))
+ - **FIX**: Expose Line3D on components.dart ([#3698](https://github.com/flame-engine/flame/issues/3698)). ([d58d7b54](https://github.com/flame-engine/flame/commit/d58d7b5482f646e4536160449f4a17317b8aff2b))
+ - **FEAT**: Introduce cone mesh ([#3699](https://github.com/flame-engine/flame/issues/3699)). ([874a97fe](https://github.com/flame-engine/flame/commit/874a97fe421dadbed9f3825c8562f8bd7e6c95c9))
+ - **DOCS**: Update instructions on how to use flame_3d ([#3696](https://github.com/flame-engine/flame/issues/3696)). ([11cc2a8f](https://github.com/flame-engine/flame/commit/11cc2a8fae0f1c17106f91ef1ac319e6f8e39036))
+
+## 0.1.0
+
+ - **REFACTOR**: Add collections library to flame_3d ([#3680](https://github.com/flame-engine/flame/issues/3680)). ([89e5e58e](https://github.com/flame-engine/flame/commit/89e5e58efb580ec267a0dca78a3a0f320203d4ee))
+ - **FIX**: Update flame_3d to support both old and newer Flutter APIs ([#3663](https://github.com/flame-engine/flame/issues/3663)). ([d9f1fe7f](https://github.com/flame-engine/flame/commit/d9f1fe7f9abd8f0307ecc22ff24d3b492e9ca332))
+ - **FEAT**: Add ability to run on flame_3d example ([#3679](https://github.com/flame-engine/flame/issues/3679)). ([801692bf](https://github.com/flame-engine/flame/commit/801692bfa1226e01f1540166a8140ab42e36ed87))
+ - **FEAT**: Add support for model parsing and rendering in flame_3d, including skeletal animations ([#3675](https://github.com/flame-engine/flame/issues/3675)). ([cc58aef5](https://github.com/flame-engine/flame/commit/cc58aef5b53f208fb1cbb116bfb9f9af9a351e8e))
+ - **FEAT**: Add setup command to flame_3d example ([#3671](https://github.com/flame-engine/flame/issues/3671)). ([2f5ba87b](https://github.com/flame-engine/flame/commit/2f5ba87be8068b12c2604b79f7db9c1f3307a4b6))
+ - **FEAT**: Organize components and add destroy command to flame_3d example ([#3665](https://github.com/flame-engine/flame/issues/3665)). ([d5915752](https://github.com/flame-engine/flame/commit/d591575263d8b13aee862efe05842001aa60f89d))
+ - **FEAT**: Add keybind to jump on flame_3d example ([#3664](https://github.com/flame-engine/flame/issues/3664)). ([7be0bccd](https://github.com/flame-engine/flame/commit/7be0bccda0040bfc3734f90b6bca7d5e99455bee))
+
+## 0.1.0-dev.14
+
+ - Update a dependency to the latest release.
+
 ## 0.1.0-dev.13
 
  - Update a dependency to the latest release.

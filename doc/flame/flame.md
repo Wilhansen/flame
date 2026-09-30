@@ -4,10 +4,10 @@
 - [Game Widget](game_widget.md)
 - [The game class](game.md)
 - [Assets Structure](structure.md)
-- [Components](components.md)
+- [Components](components/components.md)
 - [Inputs](inputs/inputs.md)
 - [Camera](camera.md)
-- [Effects](effects.md)
+- [Effects](effects/effects.md)
 - [Collision Detection](collision_detection.md)
 - [Router](router.md)
 - [Platforms](platforms.md)
@@ -23,10 +23,10 @@ Getting Started      <../README.md>
 Game Widget          <game_widget.md>
 The game class       <game.md>
 Assets Structure     <structure.md>
-Components           <components.md>
+Components           <components/components.md>
 Inputs               <inputs/inputs.md>
 Camera               <camera.md>
-Effects              <effects.md>
+Effects              <effects/effects.md>
 Collision Detection  <collision_detection.md>
 Router               <router.md>
 Platforms            <platforms.md>

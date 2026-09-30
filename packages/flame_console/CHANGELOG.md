@@ -1,3 +1,43 @@
+## 0.1.4
+
+ - Update a dependency to the latest release.
+
+## 0.1.3
+
+ - **FEAT**: Update terminui on flame_console ([#3863](https://github.com/flame-engine/flame/issues/3863)). ([6f823cb6](https://github.com/flame-engine/flame/commit/6f823cb6fa88814c518bc095594017b1f34d2054))
+
+## 0.1.2+17
+
+ - **FIX**: Bump Flutter min version to 3.41.0 ([#3807](https://github.com/flame-engine/flame/issues/3807)). ([0d505304](https://github.com/flame-engine/flame/commit/0d50530485e5be9ce1c9138a5b437607c7c5c628))
+
+## 0.1.2+16
+
+ - Update a dependency to the latest release.
+
+## 0.1.2+15
+
+ - Update a dependency to the latest release.
+
+## 0.1.2+14
+
+ - Update a dependency to the latest release.
+
+## 0.1.2+13
+
+ - **DOCS**: Add console with backtick on flame_console example ([#3743](https://github.com/flame-engine/flame/issues/3743)). ([8534a557](https://github.com/flame-engine/flame/commit/8534a5574083ba3478979a1a619bf67820062bf1))
+
+## 0.1.2+12
+
+ - Update a dependency to the latest release.
+
+## 0.1.2+11
+
+ - Update a dependency to the latest release.
+
+## 0.1.2+10
+
+ - Update a dependency to the latest release.
+
 ## 0.1.2+9
 
  - Update a dependency to the latest release.

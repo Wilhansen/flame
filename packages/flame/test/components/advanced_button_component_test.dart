@@ -1,6 +1,6 @@
 import 'package:flame/components.dart';
+import 'package:flame/events.dart';
 import 'package:flame/game.dart';
-import 'package:flame/src/events/flame_game_mixins/multi_tap_dispatcher.dart';
 import 'package:flame_test/flame_test.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -99,8 +99,9 @@ void main() {
           size: componentSize,
         ),
       );
-      final previousPosition =
-          button.positionOfAnchor(Anchor.center).toOffset();
+      final previousPosition = button
+          .positionOfAnchor(Anchor.center)
+          .toOffset();
       game.onGameResize(initialGameSize * 2);
       final tapDispatcher = game.firstChild<MultiTapDispatcher>()!;
 
@@ -145,8 +146,9 @@ void main() {
         ),
       );
       button.isDisabled = true;
-      final previousPosition =
-          button.positionOfAnchor(Anchor.center).toOffset();
+      final previousPosition = button
+          .positionOfAnchor(Anchor.center)
+          .toOffset();
       game.onGameResize(initialGameSize * 2);
       final tapDispatcher = game.firstChild<MultiTapDispatcher>()!;
 

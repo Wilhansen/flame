@@ -80,9 +80,9 @@ class PositionComponent extends Component
     super.children,
     super.priority,
     super.key,
-  })  : transform = Transform2D(),
-        _anchor = anchor ?? Anchor.topLeft,
-        _size = NotifyingVector2.copy(size ?? Vector2.zero()) {
+  }) : transform = Transform2D(),
+       _anchor = anchor ?? Anchor.topLeft,
+       _size = NotifyingVector2.copy(size ?? Vector2.zero()) {
     decorator = Transform2DDecorator(transform);
     if (position != null) {
       transform.position = position;
@@ -229,7 +229,14 @@ class PositionComponent extends Component
 
   /// The resulting angle after all the ancestors and the components own angles
   /// and scales have been applied.
-  double get absoluteAngle {
+  double get absoluteAngle => _absoluteAngle();
+
+  /// The resulting angle after all the ancestors and the components own angles
+  /// and scales have been applied, but without reflecting the angle
+  /// if the component is flipped.
+  double get absoluteAngleWithoutReflection => _absoluteAngle(reflect: false);
+
+  double _absoluteAngle({bool reflect = true}) {
     var angle = 0.0;
     var totalScaleX = 1.0;
     var totalScaleY = 1.0;
@@ -245,7 +252,7 @@ class PositionComponent extends Component
         if (ancestorScale.x.isNegative) {
           angle *= -1;
         }
-        if (ancestorScale.y.isNegative) {
+        if (ancestorScale.y.isNegative && reflect) {
           angle -= math.pi - angle;
         }
       }
@@ -266,9 +273,9 @@ class PositionComponent extends Component
 
   Vector2 get _parentAbsoluteScale {
     return ancestors().whereType<ReadOnlyScaleProvider>().fold<Vector2>(
-          Vector2.all(1.0),
-          (totalScale, c) => totalScale..multiply(c.scale),
-        );
+      Vector2.all(1.0),
+      (totalScale, c) => totalScale..multiply(c.scale),
+    );
   }
 
   /// Measure the distance (in parent's coordinate space) between this
@@ -410,14 +417,16 @@ class PositionComponent extends Component
     );
     final angleDifference = targetAngle - absoluteAngle - nativeAngle;
 
-    final hasOddFlips = parentAbsoluteScale.x.isNegative ^
+    final hasOddFlips =
+        parentAbsoluteScale.x.isNegative ^
         parentAbsoluteScale.y.isNegative ^
         scale.x.isNegative ^
         scale.y.isNegative;
     final hasSelfYFlip =
         !parentAbsoluteScale.y.isNegative && scale.y.isNegative;
 
-    final result = (hasOddFlips ? -1 : 1) * angleDifference +
+    final result =
+        (hasOddFlips ? -1 : 1) * angleDifference +
         (hasSelfYFlip ? 1 : 0) * math.pi;
     return result.toNormalizedAngle();
   }

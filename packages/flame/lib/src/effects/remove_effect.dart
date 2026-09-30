@@ -5,12 +5,11 @@ import 'package:flame/effects.dart';
 class RemoveEffect extends ComponentEffect {
   RemoveEffect({
     double delay = 0.0,
-    void Function()? onComplete,
+    super.onComplete,
     super.key,
   }) : super(
-          LinearEffectController(delay),
-          onComplete: onComplete,
-        );
+         LinearEffectController(delay),
+       );
 
   @override
   void apply(double progress) {

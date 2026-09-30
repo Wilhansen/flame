@@ -78,6 +78,28 @@ void main() {
         ],
       );
 
+      final relativePathSingleImageMap = TiledMap(
+        height: 1,
+        tileHeight: 1,
+        tileWidth: 1,
+        width: 1,
+        tilesets: [
+          Tileset(
+            // Simulate an external TSX tileset referenced by the map.
+            source: 'tiles/isometric_plain_1.tsx',
+            tileWidth: 128,
+            tileHeight: 74,
+            tileCount: 1,
+            // Simulate an image path that is relative to the TSX file.
+            image: const TiledImage(
+              source: '../images/green.png',
+              width: 128,
+              height: 74,
+            ),
+          ),
+        ],
+      );
+
       test('returns single image atlas for simple map', () async {
         final images = Images(bundle: bundle);
         final atlas = await TiledAtlas.fromTiledMap(
@@ -99,6 +121,21 @@ void main() {
           matchesGoldenFile('goldens/single_atlas.png'),
         );
       });
+
+      test(
+        'single image tileset with relative image path loads correctly',
+        () async {
+          final images = Images(bundle: bundle);
+          final atlas = await TiledAtlas.fromTiledMap(
+            relativePathSingleImageMap,
+            images: images,
+          );
+
+          expect(atlas.offsets, hasLength(1));
+          expect(atlas.atlas, isNotNull);
+          expect(atlas.key, '../images/green.png');
+        },
+      );
 
       test('returns cached atlas', () async {
         final atlas1 = await TiledAtlas.fromTiledMap(
@@ -207,42 +244,43 @@ void main() {
       });
 
       test(
-          '''Two maps with a same tileset but different tile alignment should be rendered differently''',
-          () async {
-        final components = await Future.wait([
-          TiledComponent.load(
-            'single_tile_map_1.tmx',
-            Vector2(16, 16),
-            bundle: bundle,
-            images: Images(bundle: bundle),
-          ),
-          TiledComponent.load(
-            'single_tile_map_2.tmx',
-            Vector2(16, 16),
-            bundle: bundle,
-            images: Images(bundle: bundle),
-          ),
-        ]);
+        '''Two maps with a same tileset but different tile alignment should be rendered differently''',
+        () async {
+          final components = await Future.wait([
+            TiledComponent.load(
+              'single_tile_map_1.tmx',
+              Vector2(16, 16),
+              bundle: bundle,
+              images: Images(bundle: bundle),
+            ),
+            TiledComponent.load(
+              'single_tile_map_2.tmx',
+              Vector2(16, 16),
+              bundle: bundle,
+              images: Images(bundle: bundle),
+            ),
+          ]);
 
-        final atlas = TiledAtlas.atlasMap.values.first;
-        final imageRendered_1 = renderMapToPng(components[0]);
-        final imageRendered_2 = renderMapToPng(components[1]);
+          final atlas = TiledAtlas.atlasMap.values.first;
+          final imageRendered_1 = renderMapToPng(components[0]);
+          final imageRendered_2 = renderMapToPng(components[1]);
 
-        expect(TiledAtlas.atlasMap.length, 1);
-        expect(
-          await imageToPng(atlas.atlas!),
-          matchesGoldenFile('goldens/single_tile_atlas.png'),
-        );
-        expect(imageRendered_1, isNot(same(imageRendered_2)));
-        expect(
-          imageRendered_1,
-          matchesGoldenFile('goldens/single_tile_map_1.png'),
-        );
-        expect(
-          imageRendered_2,
-          matchesGoldenFile('goldens/single_tile_map_2.png'),
-        );
-      });
+          expect(TiledAtlas.atlasMap.length, 1);
+          expect(
+            await imageToPng(atlas.atlas!),
+            matchesGoldenFile('goldens/single_tile_atlas.png'),
+          );
+          expect(imageRendered_1, isNot(same(imageRendered_2)));
+          expect(
+            imageRendered_1,
+            matchesGoldenFile('goldens/single_tile_map_1.png'),
+          );
+          expect(
+            imageRendered_2,
+            matchesGoldenFile('goldens/single_tile_map_2.png'),
+          );
+        },
+      );
     });
   });
 }

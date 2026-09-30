@@ -25,6 +25,17 @@ class DebugTextRenderer extends TextRenderer {
 
   @override
   InlineTextElement format(String text) => _DebugTextElement(this, text);
+
+  @override
+  TextRenderer copyWithPaint(Paint paint) {
+    return DebugTextRenderer(
+      color: paint.color,
+      fontSize: fontSize,
+      lineHeight: lineHeight,
+      fontWeight: fontWeight,
+      fontStyle: fontStyle,
+    );
+  }
 }
 
 class _DebugTextElement extends InlineTextElement {
@@ -34,7 +45,7 @@ class _DebugTextElement extends InlineTextElement {
     paint
       ..color = style.color
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 2.0 * (style.fontWeight.index + 1) / 4;
+      ..strokeWidth = 2.0 * (style.fontWeight.value / 100) / 4;
     metrics = LineMetrics(
       width: text.length * charWidth,
       ascent: charHeight * (style.lineHeight + 1) / 2,
@@ -87,8 +98,12 @@ class _DebugTextElement extends InlineTextElement {
         i1 += 1;
       }
       rects.add(
-        Rect.fromLTRB(i0 * charWidth, 0, i1 * charWidth, charHeight)
-            .deflate(paint.strokeWidth / 2),
+        Rect.fromLTRB(
+          i0 * charWidth,
+          0,
+          i1 * charWidth,
+          charHeight,
+        ).deflate(paint.strokeWidth / 2),
       );
       i0 = i1;
     }

@@ -1,3 +1,51 @@
+## 0.19.3+7
+
+ - Update a dependency to the latest release.
+
+## 0.19.2+6
+
+ - Update a dependency to the latest release.
+
+## 0.19.2+5
+
+ - **FIX**: Bump Flutter min version to 3.41.0 ([#3807](https://github.com/flame-engine/flame/issues/3807)). ([0d505304](https://github.com/flame-engine/flame/commit/0d50530485e5be9ce1c9138a5b437607c7c5c628))
+
+## 0.19.2+4
+
+ - Update a dependency to the latest release.
+
+## 0.19.2+3
+
+ - Update a dependency to the latest release.
+
+## 0.19.2+2
+
+ - Update a dependency to the latest release.
+
+## 0.19.2+1
+
+ - Update a dependency to the latest release.
+
+## 0.19.2
+
+ - **FEAT**: Allow bodies to not be destroyed when the world is removed from the component tree ([#3716](https://github.com/flame-engine/flame/issues/3716)). ([7d18fd3d](https://github.com/flame-engine/flame/commit/7d18fd3d1cf076bce7032eb60dbfd7777643539d))
+
+## 0.19.1
+
+ - **FIX**: Use correct `Forge2DWorld` in `onRemove` ([#3713](https://github.com/flame-engine/flame/issues/3713)). ([140833d1](https://github.com/flame-engine/flame/commit/140833d1eacf6b756f81f0452ec237c6991f2ae0))
+
+## 0.19.0+6
+
+ - Update a dependency to the latest release.
+
+## 0.19.0+5
+
+ - Update a dependency to the latest release.
+
+## 0.19.0+4
+
+ - Update a dependency to the latest release.
+
 ## 0.19.0+3
 
  - Update a dependency to the latest release.

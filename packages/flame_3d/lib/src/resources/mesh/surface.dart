@@ -2,8 +2,8 @@ import 'dart:math' as math;
 import 'dart:typed_data';
 
 import 'package:flame_3d/game.dart';
+import 'package:flame_3d/graphics.dart';
 import 'package:flame_3d/resources.dart';
-import 'package:flutter_gpu/gpu.dart' as gpu;
 
 enum PrimitiveType {
   triangles,
@@ -12,18 +12,18 @@ enum PrimitiveType {
 /// {@template surface}
 /// Base surface [Resource], it describes a single surface to be rendered.
 /// {@endtemplate}
-class Surface extends Resource<gpu.DeviceBuffer?> {
+class Surface extends Resource<GpuBuffer> {
   /// {@macro surface}
   Surface({
     required List<Vertex> vertices,
     required List<int> indices,
-    this.material,
+    Material? material,
     this.jointMap,
     /**
      * If `true`, the normals will be calculated if they are not provided.
      */
     bool calculateNormals = true,
-  }) {
+  }) : material = material ?? Material.defaultMaterial {
     final normalizedVertices = _normalize(
       vertices: vertices,
       indices: indices,
@@ -37,13 +37,24 @@ class Surface extends Resource<gpu.DeviceBuffer?> {
     ).buffer;
     _vertexCount = normalizedVertices.length;
 
-    _indices = Uint16List.fromList(indices).buffer;
+    final positions = Float32List(normalizedVertices.length * 3);
+    for (var i = 0; i < normalizedVertices.length; i++) {
+      final p = normalizedVertices[i].position;
+      positions[i * 3] = p.x;
+      positions[i * 3 + 1] = p.y;
+      positions[i * 3 + 2] = p.z;
+    }
+    this.positions = positions;
+
+    final indexList = Uint16List.fromList(indices);
+    _indices = indexList.buffer;
     _indexCount = indices.length;
+    this.indices = indexList;
 
     _calculateAabb(normalizedVertices);
   }
 
-  Material? material;
+  Material material;
   Map<int, int>? jointMap;
 
   Aabb3 get aabb => _aabb;
@@ -61,6 +72,14 @@ class Surface extends Resource<gpu.DeviceBuffer?> {
   int get indexCount => _indexCount;
   late int _indexCount;
 
+  /// The (x, y, z) positions of this surface's vertices, packed contiguously
+  /// as `[x0, y0, z0, x1, y1, z1, ...]`.
+  late final Float32List positions;
+
+  /// The triangle indices for this surface. Computed once during
+  /// construction.
+  late final Uint16List indices;
+
   int? resourceSizeInByes;
 
   @override
@@ -70,15 +89,15 @@ class Surface extends Resource<gpu.DeviceBuffer?> {
   }
 
   @override
-  gpu.DeviceBuffer? createResource() {
+  GpuBuffer createResource() {
     final sizeInBytes = _vertices.lengthInBytes + _indices.lengthInBytes;
     resourceSizeInByes = sizeInBytes;
-    return gpu.gpuContext.createDeviceBuffer(
-      gpu.StorageMode.hostVisible,
-      sizeInBytes,
-    )
-      ..overwrite(_vertices.asByteData())
-      ..overwrite(
+    return GpuBackend.instance.createBuffer(
+        storageMode: GpuStorageMode.hostVisible,
+        sizeInBytes: sizeInBytes,
+      )
+      ..write(_vertices.asByteData())
+      ..write(
         _indices.asByteData(),
         destinationOffsetInBytes: _vertices.lengthInBytes,
       );

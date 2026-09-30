@@ -5,19 +5,58 @@ import 'package:flame_test/flame_test.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'input_test_helper.dart';
+
 void main() {
   group('DragCallbacks', () {
     testWithFlameGame(
       'make sure DragCallback components can be added to a FlameGame',
       (game) async {
-        await game.add(_DragCallbacksComponent());
+        await game.add(DragCallbacksComponent());
         await game.ready();
-        expect(game.children.toList()[2], isA<MultiDragDispatcher>());
+        expect(game.children.toList()[2], isA<MultiDragScaleDispatcher>());
+      },
+    );
+
+    testWithFlameGame(
+      'removing the last DragCallbacks component disables hasDrag on the '
+      'recognizer',
+      (game) async {
+        final component = DragCallbacksComponent()..size = Vector2.all(10);
+        await game.ensureAdd(component);
+        final dispatcher = game.firstChild<MultiDragScaleDispatcher>()!;
+        expect(dispatcher.hasDrag, isTrue);
+
+        game.remove(component);
+        await game.ready();
+
+        expect(dispatcher.hasDrag, isFalse);
+      },
+    );
+
+    testWithFlameGame(
+      'hasDrag stays true while at least one DragCallbacks component remains',
+      (game) async {
+        final a = DragCallbacksComponent()..size = Vector2.all(10);
+        final b = DragCallbacksComponent()..size = Vector2.all(10);
+        await game.ensureAdd(a);
+        await game.ensureAdd(b);
+        final dispatcher = game.firstChild<MultiDragScaleDispatcher>()!;
+
+        game.remove(a);
+        await game.ready();
+
+        expect(dispatcher.hasDrag, isTrue);
+
+        game.remove(b);
+        await game.ready();
+
+        expect(dispatcher.hasDrag, isFalse);
       },
     );
 
     testWithFlameGame('drag event start', (game) async {
-      final component = _DragCallbacksComponent()
+      final component = DragCallbacksComponent()
         ..x = 10
         ..y = 10
         ..width = 10
@@ -25,25 +64,25 @@ void main() {
       game.add(component);
       await game.ready();
 
-      expect(game.children.whereType<MultiDragDispatcher>().length, 1);
-      game.firstChild<MultiDragDispatcher>()!.onDragStart(
-            createDragStartEvents(
-              game: game,
-              localPosition: const Offset(12, 12),
-              globalPosition: const Offset(12, 12),
-            ),
-          );
+      expect(game.children.whereType<MultiDragScaleDispatcher>().length, 1);
+      game.firstChild<MultiDragScaleDispatcher>()!.onDragStart(
+        createDragStartEvents(
+          game: game,
+          localPosition: const Offset(12, 12),
+          globalPosition: const Offset(12, 12),
+        ),
+      );
       expect(component.containsLocalPoint(Vector2(10, 10)), false);
     });
 
     testWithFlameGame('drag event start, update and cancel', (game) async {
-      final component = _DragCallbacksComponent()
+      final component = DragCallbacksComponent()
         ..x = 10
         ..y = 10
         ..width = 10
         ..height = 10;
       await game.ensureAdd(component);
-      final dispatcher = game.firstChild<MultiDragDispatcher>()!;
+      final dispatcher = game.firstChild<MultiDragScaleDispatcher>()!;
 
       dispatcher.onDragStart(
         createDragStartEvents(
@@ -72,15 +111,56 @@ void main() {
     });
 
     testWithFlameGame(
-      'drag event update not called without onDragStart',
+      'removed dragged component receives cancel on update and clears state',
       (game) async {
-        final component = _DragCallbacksComponent()
+        final component = DragCallbacksComponent()
           ..x = 10
           ..y = 10
           ..width = 10
           ..height = 10;
         await game.ensureAdd(component);
-        final dispatcher = game.firstChild<MultiDragDispatcher>()!;
+        final dispatcher = game.firstChild<MultiDragScaleDispatcher>()!;
+
+        dispatcher.onDragStart(
+          createDragStartEvents(
+            game: game,
+            localPosition: const Offset(12, 12),
+            globalPosition: const Offset(12, 12),
+          ),
+        );
+        expect(component.isDragged, isTrue);
+
+        game.remove(component);
+        await game.ready();
+
+        dispatcher.onDragUpdate(
+          createDragUpdateEvents(
+            game: game,
+            localPosition: const Offset(15, 15),
+            globalPosition: const Offset(15, 15),
+          ),
+        );
+
+        expect(component.dragCancelEvent, equals(1));
+        expect(component.dragEndEvent, equals(1));
+        expect(component.isDragged, isFalse);
+
+        dispatcher.onDragEnd(DragEndEvent(1, DragEndDetails()));
+        expect(component.dragCancelEvent, equals(1));
+        expect(component.dragEndEvent, equals(1));
+      },
+    );
+
+    testWithFlameGame(
+      'drag event update not called without onDragStart',
+      (game) async {
+        final component = DragCallbacksComponent()
+          ..x = 10
+          ..y = 10
+          ..width = 10
+          ..height = 10;
+        await game.ensureAdd(component);
+        final dispatcher = game.firstChild<MultiDragScaleDispatcher>()!;
         expect(component.dragStartEvent, equals(0));
         expect(component.dragUpdateEvent, equals(0));
 
@@ -98,7 +178,7 @@ void main() {
     testWidgets(
       'drag correctly registered handled event',
       (tester) async {
-        final component = _DragCallbacksComponent()
+        final component = DragCallbacksComponent()
           ..x = 10
           ..y = 10
           ..width = 10
@@ -121,7 +201,7 @@ void main() {
     testWidgets(
       'drag outside of component is not registered as handled',
       (tester) async {
-        final component = _DragCallbacksComponent()..size = Vector2.all(100);
+        final component = DragCallbacksComponent()..size = Vector2.all(100);
         final game = FlameGame(children: [component]);
         await tester.pumpWidget(GameWidget(game: game));
         await tester.pump();
@@ -138,18 +218,18 @@ void main() {
 
     testWithGame(
       'make sure the FlameGame can registers DragCallback on itself',
-      _DragCallbacksGame.new,
+      DragCallbacksGame.new,
       (game) async {
         await game.ready();
         expect(game.children.length, equals(3));
-        expect(game.children.elementAt(1), isA<MultiDragDispatcher>());
+        expect(game.children.elementAt(1), isA<MultiDragScaleDispatcher>());
       },
     );
 
     testWidgets(
       'drag correctly registered handled event directly on FlameGame',
       (tester) async {
-        final game = _DragCallbacksGame()..onGameResize(Vector2.all(300));
+        final game = DragCallbacksGame()..onGameResize(Vector2.all(300));
         await tester.pumpWidget(GameWidget(game: game));
         await tester.pump();
         await tester.pump();
@@ -167,7 +247,7 @@ void main() {
     testWidgets(
       'isDragged is changed',
       (tester) async {
-        final component = _DragCallbacksComponent()..size = Vector2.all(100);
+        final component = DragCallbacksComponent()..size = Vector2.all(100);
         final game = FlameGame(children: [component]);
         await tester.pumpWidget(GameWidget(game: game));
         await tester.pump();
@@ -193,7 +273,7 @@ void main() {
         var nDragEndCalled = 0;
         final game = FlameGame(
           children: [
-            _DragWithCallbacksComponent(
+            DragWithCallbacksComponent(
               position: Vector2(20, 20),
               size: Vector2(100, 100),
               onDragStart: (e) => nDragStartCalled++,
@@ -207,8 +287,8 @@ void main() {
         await tester.pump(const Duration(milliseconds: 10));
 
         expect(game.children.length, 4);
-        expect(game.children.elementAt(1), isA<_DragWithCallbacksComponent>());
-        expect(game.children.elementAt(2), isA<MultiDragDispatcher>());
+        expect(game.children.elementAt(1), isA<DragWithCallbacksComponent>());
+        expect(game.children.elementAt(2), isA<MultiDragScaleDispatcher>());
 
         // regular drag
         await tester.timedDragFrom(
@@ -222,11 +302,132 @@ void main() {
 
         // cancelled drag
         final gesture = await tester.startGesture(const Offset(50, 50));
-        await gesture.moveBy(const Offset(10, 10));
+        await gesture.moveBy(const Offset(20, 20));
         await gesture.cancel();
         await tester.pump(const Duration(seconds: 1));
         expect(nDragStartCalled, 2);
         expect(nDragEndCalled, 2);
+      },
+    );
+
+    testWidgets(
+      'tap is not cancelled when a DragCallbacks component is mounted first',
+      (tester) async {
+        var nDragStartCalled = 0;
+        final tapComponent = _TapCounterComponent(
+          position: Vector2(20, 20),
+          size: Vector2(100, 100),
+        );
+        final game = FlameGame(
+          children: [
+            DragWithCallbacksComponent(
+              position: Vector2(200, 200),
+              size: Vector2(100, 100),
+              onDragStart: (e) => nDragStartCalled++,
+            ),
+            tapComponent,
+          ],
+        );
+        await tester.pumpWidget(GameWidget(game: game));
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 10));
+
+        await tester.tapAt(const Offset(50, 50));
+        await tester.pump(const Duration(seconds: 1));
+
+        expect(nDragStartCalled, 0);
+        expect(tapComponent.nTapDown, 1);
+        expect(tapComponent.nTapUp, 1);
+        expect(tapComponent.nTapCancel, 0);
+      },
+    );
+
+    testWidgets(
+      'zero-delta pointer moves do not start a drag or cancel a tap',
+      (tester) async {
+        var nDragStartCalled = 0;
+        final tapComponent = _TapCounterComponent(
+          position: Vector2(20, 20),
+          size: Vector2(100, 100),
+        );
+        final game = FlameGame(
+          children: [
+            DragWithCallbacksComponent(
+              position: Vector2(200, 200),
+              size: Vector2(100, 100),
+              onDragStart: (e) => nDragStartCalled++,
+            ),
+            tapComponent,
+          ],
+        );
+        await tester.pumpWidget(GameWidget(game: game));
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 10));
+
+        final gesture = await tester.startGesture(const Offset(50, 50));
+        await gesture.moveBy(Offset.zero);
+        await gesture.moveBy(Offset.zero);
+        await gesture.moveBy(Offset.zero);
+        await gesture.up();
+        await tester.pump(const Duration(seconds: 1));
+
+        expect(nDragStartCalled, 0);
+        expect(tapComponent.nTapDown, 1);
+        expect(tapComponent.nTapUp, 1);
+        expect(tapComponent.nTapCancel, 0);
+      },
+    );
+
+    testWidgets(
+      'pointer moves below the touch slop do not start a drag',
+      (tester) async {
+        var nDragStartCalled = 0;
+        var nDragUpdateCalled = 0;
+        var nDragEndCalled = 0;
+        final tapComponent = _TapCounterComponent(
+          position: Vector2(20, 20),
+          size: Vector2(100, 100),
+        );
+        final game = FlameGame(
+          children: [
+            DragWithCallbacksComponent(
+              position: Vector2(20, 20),
+              size: Vector2(100, 100),
+              onDragStart: (e) => nDragStartCalled++,
+              onDragUpdate: (e) => nDragUpdateCalled++,
+              onDragEnd: (e) => nDragEndCalled++,
+            ),
+            tapComponent,
+          ],
+        );
+        await tester.pumpWidget(GameWidget(game: game));
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 10));
+
+        // Movement below the touch slop is a tap, not a drag.
+        var gesture = await tester.startGesture(const Offset(50, 50));
+        await gesture.moveBy(const Offset(5, 5));
+        await gesture.moveBy(const Offset(5, 5));
+        await gesture.up();
+        await tester.pump(const Duration(seconds: 1));
+        expect(nDragStartCalled, 0);
+        expect(nDragUpdateCalled, 0);
+        expect(nDragEndCalled, 0);
+        expect(tapComponent.nTapUp, 1);
+        expect(tapComponent.nTapCancel, 0);
+
+        // Once the accumulated movement exceeds the touch slop the drag
+        // starts, and the pending movement is delivered as one update.
+        gesture = await tester.startGesture(const Offset(50, 50));
+        await gesture.moveBy(const Offset(5, 5));
+        await gesture.moveBy(const Offset(20, 20));
+        await gesture.up();
+        await tester.pump(const Duration(seconds: 1));
+        expect(nDragStartCalled, 1);
+        expect(nDragUpdateCalled, 1);
+        expect(nDragEndCalled, 1);
+        expect(tapComponent.nTapUp, 1);
+        expect(tapComponent.nTapCancel, 1);
       },
     );
 
@@ -236,20 +437,20 @@ void main() {
         var nEvents = 0;
         final game = FlameGame(
           children: [
-            _DragWithCallbacksComponent(
+            DragWithCallbacksComponent(
               size: Vector2.all(100),
               onDragStart: (e) => nEvents++,
               onDragUpdate: (e) => nEvents++,
               onDragEnd: (e) => nEvents++,
             ),
-            _SimpleDragCallbacksComponent(size: Vector2.all(200)),
+            SimpleDragCallbacksComponent(size: Vector2.all(200)),
           ],
         );
         await tester.pumpWidget(GameWidget(game: game));
         await tester.pump();
         await tester.pump();
         expect(game.children.length, 5);
-        expect(game.children.elementAt(3), isA<MultiDragDispatcher>());
+        expect(game.children.elementAt(3), isA<MultiDragScaleDispatcher>());
 
         await tester.timedDragFrom(
           const Offset(20, 20),
@@ -266,7 +467,7 @@ void main() {
         final points = <Vector2>[];
         final game = FlameGame(
           children: [
-            _DragWithCallbacksComponent(
+            DragWithCallbacksComponent(
               size: Vector2.all(95),
               position: Vector2.all(5),
               onDragUpdate: (e) => points.add(e.localStartPosition),
@@ -277,7 +478,7 @@ void main() {
         await tester.pump();
         await tester.pump();
         expect(game.children.length, 4);
-        expect(game.children.elementAt(2), isA<MultiDragDispatcher>());
+        expect(game.children.elementAt(2), isA<MultiDragScaleDispatcher>());
 
         await tester.timedDragFrom(
           const Offset(80, 80),
@@ -312,7 +513,7 @@ void main() {
 
       final deltas = <Vector2>[];
       await game.world.add(
-        _DragWithCallbacksComponent(
+        DragWithCallbacksComponent(
           position: Vector2.all(-5),
           size: Vector2.all(10),
           onDragUpdate: (event) => deltas.add(event.localDelta),
@@ -349,7 +550,7 @@ void main() {
 
       final deltas = <Vector2>[];
       await game.world.add(
-        _DragWithCallbacksComponent(
+        DragWithCallbacksComponent(
           position: Vector2.all(-5),
           size: Vector2.all(10),
           onDragUpdate: (event) => deltas.add(event.localDelta),
@@ -394,90 +595,19 @@ void main() {
   );
 }
 
-mixin _DragCounter on DragCallbacks {
-  int dragStartEvent = 0;
-  int dragUpdateEvent = 0;
-  int dragEndEvent = 0;
-  int dragCancelEvent = 0;
-  int isDraggedStateChange = 0;
+class _TapCounterComponent extends PositionComponent with TapCallbacks {
+  _TapCounterComponent({super.position, super.size});
 
-  bool _wasDragged = false;
+  int nTapDown = 0;
+  int nTapUp = 0;
+  int nTapCancel = 0;
 
   @override
-  void onDragStart(DragStartEvent event) {
-    super.onDragStart(event);
-    event.handled = true;
-    dragStartEvent++;
-    if (_wasDragged != isDragged) {
-      ++isDraggedStateChange;
-      _wasDragged = isDragged;
-    }
-  }
+  void onTapDown(TapDownEvent event) => nTapDown++;
 
   @override
-  void onDragUpdate(DragUpdateEvent event) {
-    event.handled = true;
-    dragUpdateEvent++;
-  }
+  void onTapUp(TapUpEvent event) => nTapUp++;
 
   @override
-  void onDragEnd(DragEndEvent event) {
-    super.onDragEnd(event);
-    event.handled = true;
-    dragEndEvent++;
-    if (_wasDragged != isDragged) {
-      ++isDraggedStateChange;
-      _wasDragged = isDragged;
-    }
-  }
-
-  @override
-  void onDragCancel(DragCancelEvent event) {
-    super.onDragCancel(event);
-    event.handled = true;
-    dragCancelEvent++;
-  }
-}
-
-class _DragCallbacksComponent extends PositionComponent
-    with DragCallbacks, _DragCounter {}
-
-class _DragCallbacksGame extends FlameGame with DragCallbacks, _DragCounter {}
-
-class _DragWithCallbacksComponent extends PositionComponent with DragCallbacks {
-  _DragWithCallbacksComponent({
-    void Function(DragStartEvent)? onDragStart,
-    void Function(DragUpdateEvent)? onDragUpdate,
-    void Function(DragEndEvent)? onDragEnd,
-    super.position,
-    super.size,
-  })  : _onDragStart = onDragStart,
-        _onDragUpdate = onDragUpdate,
-        _onDragEnd = onDragEnd;
-
-  final void Function(DragStartEvent)? _onDragStart;
-  final void Function(DragUpdateEvent)? _onDragUpdate;
-  final void Function(DragEndEvent)? _onDragEnd;
-
-  @override
-  void onDragStart(DragStartEvent event) {
-    super.onDragStart(event);
-    return _onDragStart?.call(event);
-  }
-
-  @override
-  void onDragUpdate(DragUpdateEvent event) {
-    return _onDragUpdate?.call(event);
-  }
-
-  @override
-  void onDragEnd(DragEndEvent event) {
-    super.onDragEnd(event);
-    return _onDragEnd?.call(event);
-  }
-}
-
-class _SimpleDragCallbacksComponent extends PositionComponent
-    with DragCallbacks {
-  _SimpleDragCallbacksComponent({super.size});
+  void onTapCancel(TapCancelEvent event) => nTapCancel++;
 }

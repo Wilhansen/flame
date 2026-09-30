@@ -7,18 +7,22 @@ erickzanardo # github.com/erickzanardo
 feroult # github.com/feroult 
 fröber # github.com/Brixto
 gnarhard # github.com/gnarhard
+Hoodead # github.com/kornellapu
 kenney # kenney.nl
 Klingsbo # github.com/spydon
+Kornél # github.com/kornellapu
+lapu # Artist of reference art (basic shader tutorial)
+Lapu # github.com/kornellapu
+luan # github.com/luanpotter
 luanpotter # github.com/luanpotter
 Lukas # github.com/spydon
 pgainullin # github.com/pgainullin 
 Schnurber # github.com/schnurber 
-subosito # github.com/subosito
 spydon # github.com/spydon
 stpasha # github.com/stpasha
+subosito # github.com/subosito
 tavian # tavianator.com
 Tellinghuisen # Author of Statistical Error Propagation (2001)
 videon # github.com/markvideon
 wolfenrain # github.com/wolfenrain
 xaha # github.com/xvrh
-luan # github.com/luanpotter

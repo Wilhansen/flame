@@ -1,3 +1,11 @@
+## 1.5.1
+
+ - **FIX**: Bump Flutter min version to 3.41.0 ([#3807](https://github.com/flame-engine/flame/issues/3807)). ([0d505304](https://github.com/flame-engine/flame/commit/0d50530485e5be9ce1c9138a5b437607c7c5c628))
+
+## 1.5.0
+
+ - **FEAT**: Expose additional flame_jenny Command classes ([#3641](https://github.com/flame-engine/flame/issues/3641)). ([8ef2587d](https://github.com/flame-engine/flame/commit/8ef2587de4a1bef1d745cc1f5a626a7e84c6230c))
+
 ## 1.4.0
 
  - **FEAT**(Jenny): Add onCommandFinish lifecycle method to DialogueView ([#3600](https://github.com/flame-engine/flame/issues/3600)). ([bd5a4ca6](https://github.com/flame-engine/flame/commit/bd5a4ca68a46feb6734a70d5320bb7bf23b782d5))

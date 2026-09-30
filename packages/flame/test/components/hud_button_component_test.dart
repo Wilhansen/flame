@@ -1,7 +1,7 @@
 import 'package:flame/components.dart';
+import 'package:flame/events.dart';
 import 'package:flame/extensions.dart';
 import 'package:flame/input.dart';
-import 'package:flame/src/events/flame_game_mixins/multi_tap_dispatcher.dart';
 import 'package:flame_test/flame_test.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -51,7 +51,8 @@ void main() {
       tapDispatcher.handleTapDown(
         1,
         TapDownDetails(
-          globalPosition: initialGameSize.toOffset() +
+          globalPosition:
+              initialGameSize.toOffset() +
               margin.bottomRight -
               const Offset(1, 1),
         ),
@@ -73,7 +74,8 @@ void main() {
       tapDispatcher.handleTapDown(
         1,
         TapDownDetails(
-          globalPosition: initialGameSize.toOffset() +
+          globalPosition:
+              initialGameSize.toOffset() +
               margin.bottomRight -
               const Offset(1, 1),
         ),
@@ -103,8 +105,9 @@ void main() {
           margin: margin,
         ),
       );
-      final previousPosition =
-          button.positionOfAnchor(Anchor.center).toOffset();
+      final previousPosition = button
+          .positionOfAnchor(Anchor.center)
+          .toOffset();
       game.onGameResize(initialGameSize * 2);
       final tapDispatcher = game.firstChild<MultiTapDispatcher>()!;
 

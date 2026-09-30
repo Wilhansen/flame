@@ -1,4 +1,5 @@
 import 'package:flame/events.dart';
+import 'package:flame/input.dart';
 import 'package:flame/src/game/game.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/widgets.dart';
@@ -6,52 +7,54 @@ import 'package:flutter/widgets.dart';
 class GestureDetectorBuilder {
   GestureDetectorBuilder([this._onChange]);
 
-  final Map<Type, GestureRecognizerFactory> _gestures = {};
-  final Map<Type, int> _counters = {};
+  final Map<Type, GestureRecognizerFactory> _factories = {};
   final void Function()? _onChange;
 
-  void add<T extends GestureRecognizer>(
+  /// Registers a gesture recognizer of type [T].
+  ///
+  /// Throws a [StateError] if [T] is already registered.
+  void register<T extends GestureRecognizer>(
     T Function() constructor,
     void Function(T) initializer,
   ) {
-    final count = _counters[T];
-    if (count == null) {
-      _gestures[T] =
-          GestureRecognizerFactoryWithHandlers<T>(constructor, initializer);
-      _onChange?.call();
+    if (_factories.containsKey(T)) {
+      throw StateError('Recognizer of type $T is already registered.');
     }
-    _counters[T] = (count ?? 0) + 1;
+    _factories[T] = GestureRecognizerFactoryWithHandlers<T>(
+      constructor,
+      initializer,
+    );
+    _onChange?.call();
   }
 
-  void remove<T extends GestureRecognizer>() {
-    final count = _counters[T]!;
-    if (count == 1) {
-      _counters.remove(T);
-      _gestures.remove(T);
-      _onChange?.call();
-    } else {
-      _counters[T] = count - 1;
-    }
+  /// Removes the registration for type [T].
+  void unregister<T extends GestureRecognizer>() {
+    _factories.remove(T);
+    _onChange?.call();
   }
 
   Widget build(Widget child) {
-    if (_gestures.isEmpty) {
+    if (_factories.isEmpty) {
       return child;
     }
     return RawGestureDetector(
-      gestures: _gestures,
-      behavior: HitTestBehavior.opaque,
+      gestures: _factories,
+      behavior: HitTestBehavior.deferToChild,
       child: child,
     );
   }
 
   void initializeGestures(Game game) {
+    // support for deprecated detectors
+    // ignore: deprecated_member_use_from_same_package
     if (game is TapDetector ||
         game is SecondaryTapDetector ||
         game is TertiaryTapDetector) {
-      add(
+      register(
         TapGestureRecognizer.new,
         (TapGestureRecognizer instance) {
+          // support for deprecated detectors
+          // ignore: deprecated_member_use_from_same_package
           if (game is TapDetector) {
             instance.onTap = game.onTap;
             instance.onTapCancel = game.onTapCancel;
@@ -72,7 +75,7 @@ class GestureDetectorBuilder {
       );
     }
     if (game is DoubleTapDetector) {
-      add(
+      register(
         DoubleTapGestureRecognizer.new,
         (DoubleTapGestureRecognizer instance) {
           instance.onDoubleTap = game.onDoubleTap;
@@ -82,7 +85,7 @@ class GestureDetectorBuilder {
       );
     }
     if (game is LongPressDetector) {
-      add(
+      register(
         LongPressGestureRecognizer.new,
         (LongPressGestureRecognizer instance) {
           instance.onLongPress = game.onLongPress;
@@ -95,7 +98,7 @@ class GestureDetectorBuilder {
       );
     }
     if (game is VerticalDragDetector) {
-      add(
+      register(
         VerticalDragGestureRecognizer.new,
         (VerticalDragGestureRecognizer instance) {
           instance.onDown = game.handleVerticalDragDown;
@@ -107,7 +110,7 @@ class GestureDetectorBuilder {
       );
     }
     if (game is HorizontalDragDetector) {
-      add(
+      register(
         HorizontalDragGestureRecognizer.new,
         (HorizontalDragGestureRecognizer instance) {
           instance.onDown = game.handleHorizontalDragDown;
@@ -119,7 +122,7 @@ class GestureDetectorBuilder {
       );
     }
     if (game is ForcePressDetector) {
-      add(
+      register(
         ForcePressGestureRecognizer.new,
         (ForcePressGestureRecognizer instance) {
           instance.onStart = game.handleForcePressStart;
@@ -130,7 +133,7 @@ class GestureDetectorBuilder {
       );
     }
     if (game is PanDetector) {
-      add(
+      register(
         PanGestureRecognizer.new,
         (PanGestureRecognizer instance) {
           instance.onDown = game.handlePanDown;
@@ -142,7 +145,7 @@ class GestureDetectorBuilder {
       );
     }
     if (game is ScaleDetector) {
-      add(
+      register(
         ScaleGestureRecognizer.new,
         (ScaleGestureRecognizer instance) {
           instance.onStart = game.handleScaleStart;
@@ -152,7 +155,7 @@ class GestureDetectorBuilder {
       );
     }
     if (game is MultiTapListener) {
-      add(
+      register(
         MultiTapGestureRecognizer.new,
         (MultiTapGestureRecognizer instance) {
           final g = game as MultiTapListener;
@@ -173,23 +176,36 @@ class GestureDetectorBuilder {
 bool hasMouseDetectors(Game game) {
   return game is MouseMovementDetector ||
       game is ScrollDetector ||
-      game.mouseDetector != null;
+      game.mouseDetector != null ||
+      game.mousePressDetector != null ||
+      game.scrollDetector != null;
 }
 
 Widget applyMouseDetectors(Game game, Widget child) {
   final mouseMoveFn = game is MouseMovementDetector ? game.onMouseMove : null;
   final mouseDetector = game.mouseDetector;
+  final mousePressDetector = game.mousePressDetector;
+  final scrollDetector = game.scrollDetector;
   return Listener(
+    // Forward pointer-down to the dispatcher so it can fire `onHoverCancel`
+    // on hovered HoverCallbacks components — Flutter stops emitting
+    // PointerHoverEvents the moment a button is pressed, so without this hook
+    // the hover state would silently linger. See issue #2741.
+    onPointerDown: mousePressDetector,
+    onPointerSignal: (event) {
+      if (event is PointerScrollEvent) {
+        if (game is ScrollDetector) {
+          game.onScroll(PointerScrollInfo.fromDetails(game, event));
+        }
+        scrollDetector?.call(event);
+      }
+    },
     child: MouseRegion(
-      child: child,
       onHover: (PointerHoverEvent e) {
         mouseMoveFn?.call(PointerHoverInfo.fromDetails(game, e));
         mouseDetector?.call(e);
       },
+      child: child,
     ),
-    onPointerSignal: (event) =>
-        game is ScrollDetector && event is PointerScrollEvent
-            ? game.onScroll(PointerScrollInfo.fromDetails(game, event))
-            : null,
   );
 }

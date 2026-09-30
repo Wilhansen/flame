@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flame/camera.dart';
 import 'package:flame/components.dart';
 import 'package:flame/extensions.dart';
 import 'package:flame/game.dart';
@@ -26,6 +27,7 @@ extension ParallaxComponentExtension on FlameGame {
     int? priority,
     FilterQuality? filterQuality,
     ComponentKey? key,
+    String? package,
   }) {
     return ParallaxComponent.load(
       dataList,
@@ -43,6 +45,7 @@ extension ParallaxComponentExtension on FlameGame {
       priority: priority,
       filterQuality: filterQuality,
       key: key,
+      package: package,
     );
   }
 }
@@ -75,11 +78,11 @@ class ParallaxComponent<T extends FlameGame> extends PositionComponent
     super.children,
     super.priority,
     super.key,
-  })  : _parallax = parallax,
-        isFullscreen = size == null && !(parallax?.isSized ?? false),
-        super(
-          size: size ?? ((parallax?.isSized ?? false) ? parallax?.size : null),
-        );
+  }) : _parallax = parallax,
+       isFullscreen = size == null && !(parallax?.isSized ?? false),
+       super(
+         size: size ?? ((parallax?.isSized ?? false) ? parallax?.size : null),
+       );
 
   @mustCallSuper
   @override
@@ -88,9 +91,14 @@ class ParallaxComponent<T extends FlameGame> extends PositionComponent
     if (!isFullscreen) {
       return;
     }
-    final newSize = parent is ReadOnlySizeProvider
-        ? (parent! as ReadOnlySizeProvider).size
-        : game.size;
+    final Vector2 newSize;
+    if (parent is Viewport) {
+      newSize = (parent! as Viewport).virtualSize;
+    } else if (parent is ReadOnlySizeProvider) {
+      newSize = (parent! as ReadOnlySizeProvider).size;
+    } else {
+      newSize = game.size;
+    }
     this.size.setFrom(newSize);
     parallax?.resize(newSize);
   }
@@ -151,6 +159,7 @@ class ParallaxComponent<T extends FlameGame> extends PositionComponent
     int? priority,
     FilterQuality? filterQuality,
     ComponentKey? key,
+    String? package,
   }) async {
     return ParallaxComponent(
       parallax: await Parallax.load(
@@ -163,6 +172,7 @@ class ParallaxComponent<T extends FlameGame> extends PositionComponent
         fill: fill,
         images: images,
         filterQuality: filterQuality,
+        package: package,
       ),
       position: position,
       size: size,

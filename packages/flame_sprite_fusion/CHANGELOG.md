@@ -1,3 +1,48 @@
+## 0.2.4+2
+
+ - Update a dependency to the latest release.
+
+## 0.2.3+1
+
+ - Update a dependency to the latest release.
+
+## 0.2.3
+
+ - **FIX**: Bump Flutter min version to 3.41.0 ([#3807](https://github.com/flame-engine/flame/issues/3807)). ([0d505304](https://github.com/flame-engine/flame/commit/0d50530485e5be9ce1c9138a5b437607c7c5c628))
+ - **FEAT**: Support package argument in asset loading methods and widgets ([#3835](https://github.com/flame-engine/flame/issues/3835)). ([3f6f95b0](https://github.com/flame-engine/flame/commit/3f6f95b0225df9e4035c74de6cfad501e8c45167))
+
+## 0.2.2+3
+
+ - Update a dependency to the latest release.
+
+## 0.2.2+2
+
+ - Update a dependency to the latest release.
+
+## 0.2.2+1
+
+ - Update a dependency to the latest release.
+
+## 0.2.2
+
+ - **FEAT**: Add `getLayerByName` to `SpriteFusionTilemapData` ([#3755](https://github.com/flame-engine/flame/issues/3755)). ([9a6ca27b](https://github.com/flame-engine/flame/commit/9a6ca27b42715c0b9ae52885ab8c94bed3819c11))
+
+## 0.2.1
+
+ - **FEAT**: Add `hasAttribute` and `getAttribute` methods for `SpriteFusionTileData` ([#3751](https://github.com/flame-engine/flame/issues/3751)). ([17aeb93b](https://github.com/flame-engine/flame/commit/17aeb93b6f0e1bab11f6e237446811824e512b77))
+
+## 0.2.0+3
+
+ - Update a dependency to the latest release.
+
+## 0.2.0+2
+
+ - Update a dependency to the latest release.
+
+## 0.2.0+1
+
+ - Update a dependency to the latest release.
+
 ## 0.2.0
 
 > Note: This release has breaking changes.

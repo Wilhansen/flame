@@ -21,8 +21,10 @@ mixin HasWorldReference<T extends World> on Component {
   set world(T? value) => _world = value;
 
   T? findWorld() {
-    return ancestors(includeSelf: true)
-        .firstWhereOrNull((ancestor) => ancestor is T) as T?;
+    return ancestors(
+          includeSelf: true,
+        ).firstWhereOrNull((ancestor) => ancestor is T)
+        as T?;
   }
 
   T _findWorldAndCheck() {
@@ -36,6 +38,7 @@ mixin HasWorldReference<T extends World> on Component {
 
   @override
   void onRemove() {
+    super.onRemove();
     _world = null;
   }
 }

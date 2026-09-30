@@ -8,7 +8,7 @@ which is still supported, is described in [](gesture_input.md).
 **Tap events** are one of the most basic methods of interaction with a Flame game. These events
 occur when the user touches the screen with a finger, or clicks with a mouse, or taps with a stylus.
 A tap can be "long", but the finger isn't supposed to move during the gesture. Thus, touching the
-screen, then moving the finger, and then releasing -- is not a tap but a drag. Similarly, clicking
+screen, then moving the finger, and then releasing is not a tap but a drag. Similarly, clicking
 a mouse button while the mouse is moving will also be registered as a drag.
 
 Multiple tap events can occur at the same time, especially if the user has multiple fingers. Such
@@ -21,7 +21,7 @@ For those components that you want to respond to taps, add the `TapCallbacks` mi
   `onTapCancel`, and `onLongTapDown`. By default, each of these methods does nothing, they need
   to be overridden in order to perform any function.
 - In addition, the component must implement the `containsLocalPoint()` method (already implemented
-  in `PositionComponent`, so most of the time you don't need to do anything here) -- this method
+  in `PositionComponent`, so most of the time you don't need to do anything here). This method
   allows Flame to know whether the event occurred within the component or not.
 
 ```dart
@@ -170,6 +170,61 @@ class MyComponent extends Component with TapCallbacks {
 ```
 
 
+### SecondaryTapCallbacks
+
+In addition to the primary tap events (i.e. left mouse button on desktop), Flame also supports
+secondary tap events (i.e. right mouse button on desktop). To receive these events, add the
+`SecondaryTapCallbacks` mixin to your `PositionComponent`.
+
+```dart
+class MyComponent extends PositionComponent with SecondaryTapCallbacks {
+  @override
+  void onSecondaryTapUp(SecondaryTapUpEvent event) {
+    /// Do something
+  }
+
+  @override
+  void onSecondaryTapCancel(SecondaryTapCancelEvent event) {
+    /// Do something
+  }
+
+  @override
+  void onSecondaryTapDown(SecondaryTapDownEvent event) {
+    /// Do something
+  }
+```
+
+You can extend both `TapCallbacks` and `SecondaryTapCallbacks` in the same component to
+receive both primary and secondary tap events.
+
+
+### TertiaryTapCallbacks
+
+Flame also supports tertiary tap events (i.e. middle mouse button on desktop). To receive these
+events, add the `TertiaryTapCallbacks` mixin to your `PositionComponent`.
+
+```dart
+class MyComponent extends PositionComponent with TertiaryTapCallbacks {
+  @override
+  void onTertiaryTapUp(TertiaryTapUpEvent event) {
+    /// Do something
+  }
+
+  @override
+  void onTertiaryTapCancel(TertiaryTapCancelEvent event) {
+    /// Do something
+  }
+
+  @override
+  void onTertiaryTapDown(TertiaryTapDownEvent event) {
+    /// Do something
+  }
+```
+
+You can combine `TapCallbacks`, `SecondaryTapCallbacks`, and `TertiaryTapCallbacks` in the same
+component to receive primary, secondary, and tertiary tap events independently.
+
+
 ### DoubleTapCallbacks
 
 Flame also offers a mixin named `DoubleTapCallbacks` to receive a double-tap event from the
@@ -209,7 +264,7 @@ for the new API:
   event object `TapDownEvent event`.
 - There is no return value anymore, but if you need to make a component to pass-through the taps
   to the components below, then set `event.continuePropagation` to true. This is only needed for
-  `onTapDown` events -- all other events will pass-through automatically.
+  `onTapDown` events; all other events will pass-through automatically.
 - If your component needs to know the coordinates of the point of touch, use
   `event.localPosition` instead of computing it manually. Properties `event.canvasPosition` and
   `event.devicePosition` are also available.

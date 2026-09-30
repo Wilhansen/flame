@@ -2,7 +2,9 @@ export 'src/effects/anchor_by_effect.dart' show AnchorByEffect;
 export 'src/effects/anchor_effect.dart' show AnchorEffect;
 export 'src/effects/anchor_to_effect.dart' show AnchorToEffect;
 export 'src/effects/color_effect.dart';
+export 'src/effects/combined_effect.dart';
 export 'src/effects/component_effect.dart';
+export 'src/effects/controllers/combined_effect_controller.dart';
 export 'src/effects/controllers/curved_effect_controller.dart';
 export 'src/effects/controllers/delayed_effect_controller.dart';
 export 'src/effects/controllers/duration_effect_controller.dart';
@@ -23,6 +25,9 @@ export 'src/effects/effect.dart';
 export 'src/effects/effect_target.dart';
 export 'src/effects/function_effect.dart';
 export 'src/effects/glow_effect.dart';
+export 'src/effects/hue_by_effect.dart';
+export 'src/effects/hue_effect.dart';
+export 'src/effects/hue_to_effect.dart';
 export 'src/effects/move_along_path_effect.dart';
 export 'src/effects/move_by_effect.dart';
 export 'src/effects/move_effect.dart';
@@ -39,7 +44,9 @@ export 'src/effects/provider_interfaces.dart'
         ReadOnlyPositionProvider,
         ReadOnlyScaleProvider,
         ReadOnlySizeProvider,
-        OpacityProvider;
+        OpacityProvider,
+        PaintProvider,
+        HueProvider;
 export 'src/effects/remove_effect.dart';
 export 'src/effects/rotate_around_effect.dart';
 export 'src/effects/rotate_effect.dart';
